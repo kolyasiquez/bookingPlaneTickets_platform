@@ -1,15 +1,11 @@
-# Pliki z danymi użytkownika i logami (z mojego systemu)
 .gemini/
 .vscode/
 
-# Build Mavena (zawiera m.in. ścieżki z nazwą Twojego użytkownika C:\Users\kolyas\...)
 backend/target/
 
-# Pobrany ręcznie Maven (zajmuje dużo miejsca, nie wrzucaj go!)
 apache-maven-3.9.6/
 maven.zip
 
-# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -17,6 +13,5 @@ venv/
 env/
 .env
 
-# MacOS / Windows śmieci systemowe
 .DS_Store
 Thumbs.db
