@@ -11,7 +11,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 app = Flask(__name__)
 
 # WSDL URL - Adjust port 8181 for HTTPS, or 8080 for HTTP if needed.
-WSDL_URL = 'https://localhost:8181/airline-service/FlightBookingServiceImplService?wsdl'
+WSDL_URL = 'https://172.20.10.4:8181/airline-service/FlightBookingServiceImplService?wsdl'
 
 # Configure zeep to ignore SSL verification for local self-signed certs
 session = requests.Session()
