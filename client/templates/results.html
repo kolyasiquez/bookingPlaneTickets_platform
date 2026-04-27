@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="glass-panel">
+    <h2>Search Results</h2>
+    
+    {% if flights and flights|length > 0 %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Flight</th>
+                    <th>Date & Time</th>
+                    <th>Price</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for flight in flights %}
+                <tr>
+                    <td><strong>{{ flight.cityFrom }}</strong> to <strong>{{ flight.cityTo }}</strong></td>
+                    <td>{{ flight.date }} {{ flight.time }}</td>
+                    <td>${{ flight.price }}</td>
+                    <td>
+                        <form action="/book" method="POST" style="margin: 0; display: flex; gap: 0.5rem; align-items: center;">
+                            <input type="hidden" name="flightId" value="{{ flight.id }}">
+                            <input type="text" name="passengerName" placeholder="Passenger Name" required style="padding: 0.5rem; width: 150px;">
+                            <button type="submit" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Book</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p style="color: var(--text-muted); text-align: center; padding: 2rem 0;">No flights found for your search criteria.</p>
+    {% endif %}
+    
+    <div style="margin-top: 2rem;">
+        <a href="/" class="btn-secondary" style="display: inline-block; padding: 0.875rem 1.5rem; text-decoration: none; border-radius: 0.5rem;">Back to Search</a>
+    </div>
+</div>
+{% endblock %}

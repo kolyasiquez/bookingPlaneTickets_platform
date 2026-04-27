@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="glass-panel">
+    <h2>Find Your Next Flight</h2>
+    <form action="/search" method="POST">
+        <div style="display: flex; gap: 1rem;">
+            <div class="form-group" style="flex: 1;">
+                <label for="cityFrom">From City (Optional)</label>
+                <input type="text" id="cityFrom" name="cityFrom" placeholder="e.g. Warsaw">
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label for="cityTo">To City (Optional)</label>
+                <input type="text" id="cityTo" name="cityTo" placeholder="e.g. London">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="date">Date (Optional)</label>
+            <input type="date" id="date" name="date">
+        </div>
+        <button type="submit">Search Flights</button>
+    </form>
+
+    <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1);">
+        <h3>Check Reservation</h3>
+        <form action="/reservation/check" method="GET" onsubmit="event.preventDefault(); window.location.href='/reservation/' + document.getElementById('resId').value;">
+            <div class="form-group">
+                <input type="text" id="resId" placeholder="Enter Reservation ID (e.g. RES-XXXX)">
+            </div>
+            <button type="submit" class="btn-secondary" style="width:100%;">Check Status</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

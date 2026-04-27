@@ -1,0 +1,38 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="glass-panel" style="text-align: center;">
+    <h2 style="color: #10b981; margin-bottom: 0.5rem;">Reservation Confirmed!</h2>
+    <p style="color: var(--text-muted); margin-bottom: 2rem;">Your booking has been successfully processed.</p>
+    
+    <div style="background: rgba(0,0,0,0.2); border-radius: 0.5rem; padding: 2rem; display: inline-block; text-align: left; margin-bottom: 2rem; width: 100%; max-width: 400px;">
+        <div style="margin-bottom: 1rem;">
+            <span style="color: var(--text-muted); font-size: 0.875rem;">Reservation ID</span>
+            <div style="font-size: 1.5rem; font-weight: 700; letter-spacing: 1px;">{{ reservation.id }}</div>
+        </div>
+        
+        <div style="margin-bottom: 1rem;">
+            <span style="color: var(--text-muted); font-size: 0.875rem;">Passenger</span>
+            <div style="font-size: 1.125rem;">{{ reservation.passengerName }}</div>
+        </div>
+        
+        <div>
+            <span style="color: var(--text-muted); font-size: 0.875rem;">Flight</span>
+            <div style="font-size: 1.125rem;">{{ reservation.flight.cityFrom }} &rarr; {{ reservation.flight.cityTo }}</div>
+            <div style="color: var(--text-muted); font-size: 0.875rem; margin-top: 0.25rem;">
+                {{ reservation.flight.date }} at {{ reservation.flight.time }}
+            </div>
+        </div>
+    </div>
+    
+    <div>
+        <a href="/download_ticket/{{ reservation.id }}" style="display: inline-block; background-color: var(--primary); color: white; text-decoration: none; padding: 1rem 2rem; border-radius: 0.5rem; font-weight: 600; transition: all 0.3s ease;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 0.5rem;">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Download E-Ticket (PDF)
+        </a>
+    </div>
+</div>
+{% endblock %}
