@@ -3,11 +3,13 @@
 ## Wymagania na 15 punktów
 
 **3 niezależne moduły**
-Projekt składa się z serwera backendowego SOAP oraz niezależnego klienta webowego. Oddzielenie tych komponentów zapewnia ich bezproblemową komunikację poprzez wystawiony kontrakt usługi.
-Lokalizacja: Katalog `backend` (usługa) oraz `client` (interfejs).
+
+1. **Moduł Backend (Java EE)**: Business logic and SOAP service.
+2. **Moduł Klient (Python Flask)**: Web user interface.
+3. **Moduł Danych i Mediów**: Persistence (JSON) and MTOM generation (PDF/QR).
 
 **Serwer aplikacji / Docker**
-Warstwa serwerowa została wdrożona na pełnoprawnym serwerze aplikacyjnym Java EE (np. Payara lub GlassFish). Środowisko to zapewnia izolację oraz obsługę całego cyklu życia stworzonego web serwisu.
+Warstwa serwerowa została wdrożona na pełnoprawnym serwerze aplikacyjnym Java EE Payara. Środowisko to zapewnia izolację oraz obsługę całego cyklu życia stworzonego web serwisu.
 Lokalizacja: Serwer aplikacyjny hostujący kod z katalogu `backend`.
 
 **2 języki / technologie**
@@ -44,10 +46,10 @@ Lokalizacja: Logi w konsolach uruchomionego klienta Python oraz serwera Payara/G
 
 **Prosta dokumentacja**
 Cel, sposób instalacji oraz pokrycie wymagań opisane jest jasnym i dostępnym językiem w plikach pomocniczych. Ten plik stanowi potwierdzenie implementacji punktów zaliczeniowych całego środowiska.
-Lokalizacja: Aktualny dokument `docs/wymagania_projektowe.md`.
+Lokalizacja: Aktualny dokument `docs/General_Documentation.md`.
 
 **Klient i serwer SOAP**
-Architektura aplikacji została rygorystycznie oparta o standard komunikacji SOAP w celu wymiany danych. Serwer udostępnia deskryptor WSDL, który jest bezbłędnie asymilowany przez bibliotekę klienta.
+Architektura aplikacji została oparta o standard komunikacji SOAP w celu wymiany danych. Serwer udostępnia deskryptor WSDL, który jest bezbłędnie asymilowany przez bibliotekę klienta.
 Lokalizacja: Użycie parsera `zeep` po stronie Pythona oraz web service po stronie Javy.
 
 **Klient okienkowy lub w przeglądarce**

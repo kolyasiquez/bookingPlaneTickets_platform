@@ -1,212 +1,101 @@
-# Dokumentacja Usługi Sieciowej: [Your Project Name]
+# Dokumentacja Usługi Sieciowej: System Rezerwacji Biletów Lotniczych
 
-## Metryczka (Document Control)
+## Autorzy
 
-| Akcja (Action) | Autor / Zespół (Author/Team) | Data (Date) |
-| :--- | :--- | :--- |
-| Utworzono (Created) | [Twój Zespół / Imię Nazwisko] | [YYYY-MM-DD] |
-| Ostatnia modyfikacja (Last Modified) | [Twój Zespół / Imię Nazwisko] | [YYYY-MM-DD] |
-| Zatwierdzono (Approved) | [Imię Nazwisko Akceptującego] | [YYYY-MM-DD] |
+| Autor | Data |
+| :---  | :--- |
+| Nazar Hrinchenko | 2026-04-24 |
+| Mykola Nishchymnyi | 2026-04-24 |
 
-## Spis treści (Table of Contents)
+## Spis treści
 
 1. [Wprowadzenie](#1-wprowadzenie)
 2. [Słownik pojęć](#2-słownik-pojęć)
-3. [Zmiany w systemie/API](#3-zmiany-w-systemieapi)
-4. [Złożone typy danych](#4-złożone-typy-danych)
-5. [Składanie dokumentów](#5-składanie-dokumentów)
-6. [Podgląd dokumentów/informacji](#6-podgląd-dokumentówinformacji)
-7. [Ograniczenia](#7-ograniczenia)
-8. [Wersja systemu](#8-wersja-systemu)
-9. [Dostęp do usług](#9-dostęp-do-usług)
-   - [9.1 Wymagania](#91-wymagania)
-   - [9.2 Uwierzytelnienie](#92-uwierzytelnienie)
-10. [Obsługa błędów](#10-obsługa-błędów)
-    - [10.1 Kody błędów aplikacji](#101-kody-błędów-aplikacji)
-    - [10.2 Kody błędów walidacji](#102-kody-błędów-walidacji)
-11. [Przykłady użycia](#11-przykłady-użycia)
+3. [Złożone typy danych](#3-złożone-typy-danych)
+4. [Składanie dokumentów](#4-składanie-dokumentów)
+5. [Podgląd dokumentów/informacji](#5-podgląd-dokumentówinformacji)
+6. [Dostęp do usług](#6-dostęp-do-usług)
+7. [Przykłady użycia](#7-przykłady-użycia)
 
 ---
 
-## 1. Wprowadzenie (Introduction)
+## 1. Wprowadzenie
 
-Niniejszy dokument opisuje techniczne szczegóły interfejsu programistycznego (API) dla projektu **[Your Project Name]**. Głównym celem integracji jest umożliwienie klientom zewnętrznym wymiany danych oraz obsługi procesów biznesowych związanych z [Krótki Opis Celu, np. rezerwacją biletów]. Web service został zaimplementowany w języku Python i jest hostowany na serwerze Linux Mint, oferując stabilne, zoptymalizowane punkty końcowe oparte na standardzie SOAP.
+Niniejszy dokument opisuje techniczne szczegóły interfejsu programistycznego (API) dla projektu **System Rezerwacji Biletów Lotniczych**. Głównym celem integracji jest umożliwienie klientom zewnętrznym wymiany danych oraz obsługi procesów biznesowych związanych z wyszukiwaniem i rezerwacją biletów lotniczych. Web service został zaimplementowany w języku Java (JAX-WS) i oferuje punkty końcowe oparte na standardzie SOAP wraz z obsługą mechanizmu MTOM.
 
-Docelowymi odbiorcami tej dokumentacji są analitycy systemowi, programiści oraz integratorzy oprogramowania zewnętrznego.
-
-## 2. Słownik pojęć (Glossary)
+## 2. Słownik pojęć
 
 | L.p. (No.) | Pojęcie (Term) | Definicja (Definition) |
 | :---: | :--- | :--- |
 | 1. | **API** | Interfejs programowania aplikacji umożliwiający integrację z systemem. |
 | 2. | **SOAP** | Protokół oparty o XML wykorzystywany do wymiany informacji w sieci. |
-| 3. | **[Nazwa Usługi]** | [Definicja Usługi, np. Usługa walidująca żądania rezerwacji]. |
-| 4. | **MTOM** | Mechanizm optymalizacji przesyłania załączników binarnych w SOAP (np. plików PDF/PNG). |
+| 3. | **FlightBookingService** | Usługa sieciowa obsługująca logikę biznesową rezerwacji. |
+| 4. | **MTOM** | Mechanizm optymalizacji przesyłania załączników binarnych w SOAP (np. biletów PDF lub kodów QR). |
 
-## 3. Zmiany w systemie/API (Recent Changes)
+## 3. Złożone typy danych
 
-* **[Wersja API, np. v1.1.0] - [YYYY-MM-DD]**
-  * Dodano nowy punkt końcowy: `[Nazwa Endpointu]`.
-  * Usunięto przestarzałe pole `[Nazwa Pola]` ze schematu żądania.
-* **[Wersja API, np. v1.0.0] - [YYYY-MM-DD]**
-  * Pierwsze oficjalne wydanie API.
+Rozszerzenia schematów wykorzystywane w usłudze:
 
-## 4. Złożone typy danych (Complex Data Types)
+- **Flight**: Model danych lotu. Zawiera identyfikator (`id`), miejsce wylotu (`cityFrom`), miejsce przylotu (`cityTo`), datę (`date`), godzinę (`time`) oraz cenę (`price`).
+- **Reservation**: Model rezerwacji. Zawiera identyfikator rezerwacji (`reservationId`), powiązany lot (`flight`) oraz dane pasażera (`passengerName`).
 
-Rozszerzenia schematów wykorzystywane w usłudze. Schemat XSD definiujący struktury danych dostępny jest pod adresem: `[Adres do schematu XSD/WSDL]`.
+## 4. Składanie dokumentów
 
-* **[Nazwa Typu Danych, np. ReservationType]**: Definiuje złożony model, składający się z identyfikatora rezerwacji, danych klienta oraz listy usług.
-* **[Nazwa Typu Danych, np. PassengerInfo]**: Obejmuje dane osobowe niezbędne do utworzenia dokumentów.
+Zewnętrzni klienci mogą wykonywać następujące operacje modyfikujące stan:
 
-*(Szczegółowy opis formatu payload'ów, wymagalności pól oraz mapowania typów Python/XML należy określić w załączonym schemacie WSDL).*
+- Rezerwacja biletu na wybrany lot (`bookTicket`). Przekazywane parametry: `flightId` (Long), `passengerName` (String). Metoda zwraca unikalny identyfikator rezerwacji w systemie.
 
-## 5. Składanie dokumentów (Submitting Documents/Data)
-
-Poniższa lista prezentuje zasoby i dokumenty, które klienci mogą wysyłać (push) poprzez API:
-
-* Przesyłanie nowego zapytania ofertowego (`[Nazwa Metody / np. submitOffer]`).
-* Dodawanie nowej rezerwacji (`[Nazwa Metody / np. createReservation]`).
-* Przesyłanie załączników powiązanych ze zgłoszeniem (np. w standardzie MTOM).
-
-## 6. Podgląd dokumentów/informacji (Viewing Documents/Info)
+## 5. Podgląd dokumentów/informacji
 
 Zewnętrzni klienci mogą pobierać (fetch) następujące zasoby i informacje:
 
-* Pobieranie listy dostępnych elementów (`[Nazwa Metody / np. getAvailableFlights]`).
-* Sprawdzanie statusu przetworzonego dokumentu (`[Nazwa Metody / np. checkStatus]`).
-* Generowanie i pobieranie binarnych plików (PDF, PNG) z systemu (`[Nazwa Metody / np. getTicketDocument]`).
+- Wyszukiwanie dostępnych lotów (`searchFlights`). Pozwala na filtrowanie po parametrach: `cityFrom`, `cityTo`, `date`. Zwraca listę obiektów `Flight`.
+- Sprawdzanie szczegółów rezerwacji (`checkReservation`). Parametr wejściowy to `reservationId`. Zwraca obiekt `Reservation`.
+- Generowanie i pobieranie biletu w formacie PDF (`getTicketPDF`). Parametr wejściowy to `reservationId`. Zwraca załącznik binarny (MTOM).
+- Generowanie i pobieranie kodu QR przypisanego do biletu (`getTicketQRCode`). Parametr wejściowy to `reservationId`. Zwraca załącznik binarny (MTOM).
 
-## 7. Ograniczenia (Limitations)
+## 6. Dostęp do usług
 
-System implementuje mechanizmy zabezpieczające przed przeciążeniem i niekontrolowanym wzrostem żądań na serwerze Linux Mint:
+**Adres bazowy WSDL**: `https://<ip_serwera>:8182/airline-service/FlightBookingServiceImplService?wsdl`
+*(Uwaga: adres IP i port mogą się różnić w zależności od środowiska i konfiguracji serwera aplikacji np. Payara)*
 
-* **Rate Limits (Limity zapytań)**: Dozwolone jest maksymalnie `[Limit, np. 100 zapytań]` na `[Jednostka czasu, np. minutę]` z jednego adresu IP klienta.
-* **Rozmiar Payloadu**: Maksymalny rozmiar komunikatu XML wynosi `[np. 5 MB]`. Dodawane załączniki w jednym żądaniu nie mogą przekroczyć `[np. 15 MB]`.
-* **Utrzymanie sesji**: Usługa jest bezstanowa. Żadne sesje pomiędzy kolejnymi wezwaniami metody nie są utrzymywane.
+### 6.1 Wymagania
 
-## 8. Wersja systemu (System Versioning)
+- **Kodowanie**: Wszelka komunikacja musi być realizowana przy pomocy kodowania znaków `UTF-8`.
+- **Komunikacja**: Wspierana jest komunikacja HTTPS (np. na porcie 8182 w przypadku Payara). Należy zachować ostrożność w przypadku certyfikatów self-signed.
+- **Bezstanowość**: Usługa jest bezstanowa. Żadne sesje pomiędzy kolejnymi wywołaniami metod nie są utrzymywane.
 
-API stosuje zasady **Semantic Versioning (SemVer)** - `[MAJOR].[MINOR].[PATCH]`.
+## 7. Przykłady użycia
 
-* Zmiany w **MAJOR** (np. v2.0.0) wskazują na modyfikacje kompatybilne wstecz (np. zmiana wymagalności kluczowych pól).
-* Zmiany w **MINOR** (np. v1.1.0) dodają nowe funkcjonalności (nowe metody, opcjonalne pola) i nie niszczą kompatybilności klienta.
-* Zmiany w **PATCH** oznaczają wdrożenie poprawek wydajności i błędów po stronie serwera Linux Mint.
+### 7.1 Wyszukiwanie lotów
 
-Bieżący docelowy endpoint jest wersjonowany bezpośrednio w adresie WSDL: `[Twój Endpoint URL / np. /api/v1/usluga]`.
+**Przykładowe żądanie:**
 
-## 9. Dostęp do usług (Service Access)
-
-Serwer produkcyjny działa w środowisku systemu Linux Mint.
-
-**Adres bazowy WSDL**: `[Base WSDL URL]`
-**Adres Endpointu SOAP**: `[Endpoint URL]`
-
-### 9.1 Wymagania (Requirements)
-
-* **Kodowanie**: Wszelka komunikacja musi być realizowana przy pomocy kodowania znaków `UTF-8`.
-* **Rozmiar**: Zgodnie z punktem [7. Ograniczenia](#7-ograniczenia), zaleca się trzymanie wielkości jednego żądania poniżej `[np. 5 MB]`.
-* **Czas oczekiwania (Timeout)**: Maksymalny czas odpowiedzi usługi na zapytanie to `[Czas, np. 30 sekund]`. Po tym czasie klient powinien ponowić próbę.
-
-### 9.2 Uwierzytelnienie (Authentication)
-
-Dostęp do serwisu został zabezpieczony za pomocą:
-* **[Metoda Autoryzacji, np. Basic Auth / API Key]**
-* Parametry wymagane do każdego wywołania to:
-  * `[Przykładowy Nagłówek, np. X-API-KEY]`: `[Klucz wygenerowany dla klienta]`
-  * `[Login, np. Username]`: `[Twój Identyfikator]`
-
-Wszelka komunikacja odbywa się z narzuconym protokołem HTTPS (port `[np. 443]`).
-
-## 10. Obsługa błędów (Error Handling)
-
-System wykorzystuje klasyczne struktury *SOAP Fault* do raportowania wyjątków oraz posiada ujednoliconą klasyfikację błędów.
-
-### 10.1 Kody błędów aplikacji (Application Error Codes)
-
-Błędy wynikające z ogólnego logiki i środowiska serwera.
-
-| Kod (Code) | Opis (Description) | Rekomendowana akcja |
-| :---: | :--- | :--- |
-| `ERR_APP_001` | System przechodzi przerwę techniczną. | Spróbuj ponownie za kilka minut. |
-| `ERR_APP_002` | Brak dostępu - błędne poświadczenia autoryzacji. | Sprawdź certyfikaty i klucze API. |
-| `ERR_APP_003` | Przekroczono limit wysłanych żądań (Rate limit). | Odczekaj czas zdefiniowany przez serwer. |
-
-### 10.2 Kody błędów walidacji (Validation Error Codes)
-
-Błędy wynikające z dostarczenia niepoprawnych danych wejściowych w XML.
-
-| Kod (Code) | Opis (Description) | Rekomendowana akcja |
-| :---: | :--- | :--- |
-| `ERR_VAL_101` | Brak wymaganej wartości dla pola `[Nazwa Pola]`. | Skoryguj i uzupełnij brakujący element w XML. |
-| `ERR_VAL_102` | Niezgodny format daty dla `[Nazwa Pola daty]`. | Użyj formatu `YYYY-MM-DD`. |
-| `ERR_VAL_103` | Wybrany obiekt `[Identyfikator]` nie figuruje w systemie. | Upewnij się, że element został odpowiednio wyciągnięty w poprzednim zapytaniu. |
-
-## 11. Przykłady użycia (Usage Examples)
-
-Poniżej zamieszczono schematy przykładowych wywołań w oparciu o wybrane metody usługi.
-
-### 11.1 [Przykładowa Metoda / np. Pobranie danych obiektu]
-
-**Przykładowe żądanie (Request Payload):**
 ```xml
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:api="http://[Twój Projekt.com]/api/">
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://service.airline.com/">
    <soapenv:Header/>
    <soapenv:Body>
-      <api:[Nazwa Metody]>
-         <!-- Należy przekazać poprawny identyfikator parametru -->
-         <id>[Przykładowe ID]</id>
-      </api:[Nazwa Metody]>
+      <ser:searchFlights>
+         <cityFrom>Warsaw</cityFrom>
+         <cityTo>London</cityTo>
+         <date>2026-05-01</date>
+      </ser:searchFlights>
    </soapenv:Body>
 </soapenv:Envelope>
 ```
 
-**Przykładowa odpowiedź (Response Payload):**
-```xml
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
-   <soapenv:Body>
-      <api:[Nazwa Metody]Response xmlns:api="http://[Twój Projekt.com]/api/">
-         <status>SUCCESS</status>
-         <data>
-            <!-- Zwrócone szczegóły i struktura złożona -->
-            <field1>[Odpowiedź 1]</field1>
-            <field2>[Odpowiedź 2]</field2>
-         </data>
-      </api:[Nazwa Metody]Response>
-   </soapenv:Body>
-</soapenv:Envelope>
-```
+### 7.2 Rezerwacja biletu
 
-### 11.2 [Przykładowa Metoda / np. Rejestracja nowego zgłoszenia]
+**Przykładowe żądanie:**
 
-**Przykładowe żądanie (Request Payload):**
 ```xml
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:api="http://[Twój Projekt.com]/api/">
-   <soapenv:Header>
-      <!-- Autoryzacja poświadczeń -->
-      <api:AuthHeader>
-         <apiKey>[Wprowadź Klucz]</apiKey>
-      </api:AuthHeader>
-   </soapenv:Header>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://service.airline.com/">
+   <soapenv:Header/>
    <soapenv:Body>
-      <api:[Druga Nazwa Metody]>
-         <documentData>
-            <title>[Tytuł]</title>
-            <payloadContent>[Zawartość]</payloadContent>
-         </documentData>
-      </api:[Druga Nazwa Metody]>
-   </soapenv:Body>
-</soapenv:Envelope>
-```
-
-**Przykładowa odpowiedź (Response Payload):**
-```xml
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
-   <soapenv:Body>
-      <api:[Druga Nazwa Metody]Response xmlns:api="http://[Twój Projekt.com]/api/">
-         <!-- Zwrócone identyfikatory i status zapisu w bazie na serwerze Linux -->
-         <transactionId>[Nowe ID Transakcji]</transactionId>
-         <message>Zapis udany</message>
-      </api:[Druga Nazwa Metody]Response>
+      <ser:bookTicket>
+         <flightId>1</flightId>
+         <passengerName>Jan Kowalski</passengerName>
+      </ser:bookTicket>
    </soapenv:Body>
 </soapenv:Envelope>
 ```
