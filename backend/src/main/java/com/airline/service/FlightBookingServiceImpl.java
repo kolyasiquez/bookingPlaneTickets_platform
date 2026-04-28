@@ -113,4 +113,24 @@ public class FlightBookingServiceImpl implements FlightBookingService {
         }
         return null;
     }
+
+    @Override
+    public DataHandler getTicketQRCode(String reservationId) {
+        Map<String, Reservation> currentReservations = DataStorage.loadReservations();
+        if (currentReservations != null) {
+            reservations.clear();
+            reservations.putAll(currentReservations);
+        }
+        
+        Reservation reservation = reservations.get(reservationId);
+        if (reservation == null) {
+            return null;
+        }
+
+        byte[] qrBytes = com.airline.util.TicketQrCodeGenerator.generateQRCode(reservation);
+        if (qrBytes != null) {
+            return new DataHandler(new ByteArrayDataSource(qrBytes, "image/png"));
+        }
+        return null;
+    }
 }

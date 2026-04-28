@@ -28,4 +28,7 @@ public interface FlightBookingService {
 
     @WebMethod
     DataHandler getTicketPDF(@WebParam(name = "reservationId") String reservationId);
+
+    @WebMethod
+    DataHandler getTicketQRCode(@WebParam(name = "reservationId") String reservationId);
 }

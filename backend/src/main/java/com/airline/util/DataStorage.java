@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class DataStorage {
 
-    private static final String DATA_DIR = System.getProperty("user.home") + File.separator + ".airline_data";
+    private static final String DATA_DIR = "C:\\Users\\kolyas\\Desktop\\bookingPlaneTickets_platform\\bookingPlaneTickets_platform\\backend\\data";
     private static final String FLIGHTS_FILE = DATA_DIR + File.separator + "flights.json";
     private static final String RESERVATIONS_FILE = DATA_DIR + File.separator + "reservations.json";
     
@@ -67,7 +67,7 @@ public class DataStorage {
                 e.printStackTrace();
             }
         }
-        return new ConcurrentHashMap<>();
+        return null;
     }
 
     public static void saveReservations(Map<String, Reservation> reservations) {

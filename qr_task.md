@@ -1,0 +1,7 @@
+- [x] Modify backend/pom.xml to add ZXing dependencies
+- [x] Create TicketQrCodeGenerator.java in the backend
+- [x] Modify FlightBookingService.java interface
+- [x] Modify FlightBookingServiceImpl.java to implement QR endpoint
+- [x] Modify client/app.py to add download route
+- [x] Modify client/templates/reservation.html to add download button
+- [x] Build the project and instruct the user how to test

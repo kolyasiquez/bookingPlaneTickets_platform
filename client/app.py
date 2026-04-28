@@ -11,7 +11,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 app = Flask(__name__)
 
 # WSDL URL - Adjust port 8181 for HTTPS, or 8080 for HTTP if needed.
-WSDL_URL = 'https://172.20.10.4:8182/airline-service/FlightBookingServiceImplService?wsdl'
+WSDL_URL = 'http://localhost:8080/airline-service/FlightBookingServiceImplService?wsdl'
 
 # Configure zeep to ignore SSL verification for local self-signed certs
 session = requests.Session()
@@ -91,6 +91,25 @@ def download_ticket(res_id):
         return "Ticket not found or error generating PDF."
     except Exception as e:
         return f"Error downloading ticket: {e}"
+
+@app.route('/download_qrcode/<res_id>')
+def download_qrcode(res_id):
+    global client
+    if client is None:
+        client = Client(WSDL_URL, transport=transport)
+        
+    try:
+        qr_data = client.service.getTicketQRCode(reservationId=res_id)
+        if qr_data:
+            return send_file(
+                io.BytesIO(qr_data),
+                mimetype='image/png',
+                as_attachment=True,
+                download_name=f'qrcode_{res_id}.png'
+            )
+        return "Ticket not found or error generating QR Code."
+    except Exception as e:
+        return f"Error downloading QR Code: {e}"
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
