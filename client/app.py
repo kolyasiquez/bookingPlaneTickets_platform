@@ -5,6 +5,8 @@ import requests
 import io
 import urllib3
 
+# source .venv/bin/activate DON'T FORGET THIS!
+
 # Suppress insecure request warnings if using self-signed cert on Payara
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
