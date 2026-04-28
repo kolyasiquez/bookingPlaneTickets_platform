@@ -1,7 +1,9 @@
-- [x] Modify backend/pom.xml to add ZXing dependencies
-- [x] Create TicketQrCodeGenerator.java in the backend
-- [x] Modify FlightBookingService.java interface
-- [x] Modify FlightBookingServiceImpl.java to implement QR endpoint
-- [x] Modify client/app.py to add download route
-- [x] Modify client/templates/reservation.html to add download button
-- [x] Build the project and instruct the user how to test
+# Funkcje kodów QR
+
+- [x] Zmodyfikuj `backend/pom.xml` instalując bibliotekę ZXing
+- [x] Utwórz klasę obsługi graficznej w serwisie (`TicketQrCodeGenerator.java`)
+- [x] Dopsiz odwołanie do interfejsu kluczowego w plikach API 
+- [x] Realizacja punktu zwrotnego wysyłki z uwzględnieniem żądania `FlightBookingServiceImpl.java`
+- [x] Przyjęcie strumienia po stronie routingu Flask na kliencie.
+- [x] Wymuszenie dodania widoku opcji w arkuszu wyników strony wizualnej (`reservation.html`)
+- [x] Skompiluj nowo powołane poprawki

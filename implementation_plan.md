@@ -1,85 +1,68 @@
-# System Rezerwacji Biletów Lotniczych
+# Plan Implementacji: System Rezerwacji Biletów Lotniczych
 
-This document outlines the plan to build the airline ticket booking system using a Java-based SOAP Web Service deployed on Payara Server and a Python web client, fulfilling all project requirements including extra points (SSL/TLS, multi-language).
+Ten dokument opisuje plan budowy systemu rezerwacji biletów opartego na usłudze SOAP wdrażanej w serwerze Payara i aplikacji klienckiej w Pythonie, spełniającego wszystkie wymagania projektowe z punktacją (w tym szyfrowanie SSL/TLS oraz implementację wielojęzykową).
 
-## User Review Required
+## Oczekiwana Weryfikacja
 
 > [!IMPORTANT]
-> **Client Language Choice**: I have proposed **Python** (using Flask for a web interface and `zeep` for SOAP communication) for the client application to fulfill the requirement of using a language other than Java. Python is highly portable and easy to demonstrate. Please confirm if Python is acceptable, or if you prefer another language (e.g., C# .NET).
+> **Wybór Języka Klienta**: Zaproponowałem **Pythona** (korzystając z frameworka Flask do interfejsu i `zeep` do obsługi SOAP) dla aplikacji klienckiej by zrealizować wymóg drugiego języka programowania. Python jest niezwykle wygodny i łatwy w prezentacji. Potwierdź, czy Python Ci odpowiada, lub czy preferujesz coś innego (np. C# .NET).
 >
-> **Database**: For simplicity and ease of setup for a presentation, I plan to use an **in-memory data store** (singleton bean with concurrent collections) pre-populated with some flights. Please let me know if you require a persistent database (e.g., MySQL, PostgreSQL, or an embedded database like H2/Derby).
+> **Baza danych**: Dla uproszczenia ustawienia i demonstracji planuję wykorzystać **bazę w pamięci aplikacji** z zestawem gotowych danych. Daj znać, jeżeli wymagasz pełnoprawnej zewnętrznej bazy do działania (jak MySQL, PostgreSQL lub H2).
 >
-> **PDF Generation**: I will use Apache PDFBox to generate the PDF ticket dynamically on the server side before sending it via MTOM.
+> **Generowanie PDF**: Użyję biblioteki Apache PDFBox by generować bilety do pobrania jako strumienie danych przed ich dołączeniem mechanizmem MTOM.
 
-## Proposed Changes
+## Proponowane Zmiany
 
-### 1. Java SOAP Web Service (Backend)
-**Directory: `backend/`**
-A Maven-based Jakarta EE project to be deployed on Payara.
+### 1. Usługa SOAP w Javie (Backend)
+**Katalog: `backend/`**
+Projekt w ekosystemie Jakarta EE obsługiwany przez Mavena do wdrażania w Payarze.
 
-#### [NEW] `backend/pom.xml`
-Maven configuration including dependencies for Jakarta EE, JAX-WS, and Apache PDFBox (for generating PDF tickets).
+#### [NOWY] `backend/pom.xml`
+Konfiguracja zależności Mavena obejmująca Jakarta EE, JAX-WS i Apache PDFBox (dla generowania PDF).
 
-#### [NEW] `backend/src/main/java/com/airline/model/Flight.java` & `Reservation.java`
-Domain models representing flights and reservations.
+#### [NOWY] `backend/src/main/java/com/airline/model/Flight.java` & `Reservation.java`
+Domenowe modele danych opisujące loty i tworzone z nich rezerwacje.
 
-#### [NEW] `backend/src/main/java/com/airline/service/FlightBookingService.java` (Interface & Implementation)
-The core JAX-WS `@WebService`.
-Operations:
+#### [NOWY] `backend/src/main/java/com/airline/service/FlightBookingService.java`
+Główny interfejs dla adnotacji `@WebService`.
+Operacje:
 - `getFlights(String cityFrom, String cityTo, String date)`
 - `bookTicket(Long flightId, String passengerName)`
 - `checkReservation(String reservationId)`
-- `@MTOM` enabled `getTicketPDF(String reservationId)` returning a `DataHandler`.
+- Włączone przez `@MTOM` wywołanie `getTicketPDF(String reservationId)` podające w odpowiedzi `DataHandler`.
 
-#### [NEW] `backend/src/main/java/com/airline/handlers/LoggingHandler.java`
-A SOAPHandler to intercept and log all incoming and outgoing SOAP messages to the server console. This fulfills the "Handlers" requirement and helps with the "live presentation of SOAP messages".
+#### [NOWY] `backend/src/main/java/com/airline/handlers/LoggingHandler.java`
+Klasa nasłuchująca bazująca na interfejsie SOAPHandler wypisująca przychodzące i wychodzące struktury na wyjściu konsoli serwera.
 
-#### [NEW] `backend/src/main/resources/handlers.xml`
-Configuration file to register the `LoggingHandler`.
+#### [NOWY] `backend/src/main/resources/handlers.xml`
+Rejestrator handlera logującego konfigurujący logikę JAX-WS.
 
-### 2. Python Web Client Application (Frontend)
-**Directory: `client/`**
-A Python Flask web application that acts as the client to the SOAP service.
+### 2. Aplikacja Kliencka (Frontend)
+**Katalog: `client/`**
+Napisana w Pythonie platforma renderująca interfejs do obsługi komunikacji.
 
-#### [NEW] `client/requirements.txt`
-Dependencies: `Flask`, `zeep` (for SOAP), `requests`.
+#### [NOWY] `client/requirements.txt`
+Zależności: `Flask`, `zeep` (do SOAP), `requests`.
 
-#### [NEW] `client/app.py`
-The main Flask application. It will configure the `zeep` client to connect to the Payara server using HTTPS (port 8181) to fulfill the SSL/TLS requirement. It will include routes for:
-- Home (search flights)
-- Booking a flight
-- Checking reservation status
-- Downloading the PDF ticket
+#### [NOWY] `client/app.py`
+Serwer wywołujący integrację `zeep` wykorzystując zintegrowane wezwania z protokołem HTTPS (port 8181). Będzie obsługiwał routing dla widoków stron.
 
-#### [NEW] `client/templates/`
-HTML templates (using Vanilla CSS for a modern, attractive UI) for the web interface.
+#### [NOWY] `client/templates/`
+Zestaw stron wykorzystujących CSS dla czytelnej oprawy graficznej, w której odbywa się obsługa usług u klienta.
 
-### 3. Documentation
-**Directory: `docs/`**
-Comprehensive documentation as requested.
+### 3. Dokumentacja
+**Katalog: `docs/`**
+Przygotowane pomoce i szczegóły implementacji.
 
-#### [NEW] `docs/project_description.md`
-General description of the project, architecture, and features.
+## Plan Weryfikacji
 
-#### [NEW] `docs/WSDL_description.md`
-Detailed description of the WSDL contract.
-
-#### [NEW] `docs/SOAP_messages_examples.md`
-Examples of intercepted SOAP requests and responses (with and without MTOM attachments).
-
-#### [NEW] `docs/instructions_for_external_client.md`
-Step-by-step instructions on how an external client can connect to and consume the web service, particularly focusing on the SSL endpoint.
-
-## Verification Plan
-
-### Automated/Manual Verification
-1. Build the `backend` using Maven: `mvn clean package`.
-2. Deploy the generated `.war` file to the local Payara server.
-3. Start the Python Flask client (`python app.py`).
-4. Perform a manual walkthrough:
-   - Search for flights via the web UI.
-   - Book a flight and note the reservation ID.
-   - Download the PDF ticket (verifies MTOM).
-   - Check the reservation status.
-   - Check the Payara server logs to view the intercepted SOAP messages (verifies Handlers).
-5. Verify that the Python client is connecting via `https://localhost:8181/...` (verifies SSL/TLS requirement).
+### Zautomatyzowana/Ręczna Weryfikacja
+1. Skompiluj backend z użyciem `mvn clean package`.
+2. Opublikuj paczkę `.war` na Payara 5.
+3. Włącz klienta i aplikację przeglądarki poleceniem `python app.py`.
+4. Wykonaj całą ścieżkę logiki przeznaczoną dla platformy:
+   - Wyszukaj dostępne zdefiniowane loty w HTML.
+   - Wykonaj rezerwację, pamiętając wygenerowane w sesji id.
+   - Zrealizuj opcję wydruku na dysk twardy PDF (test MTOM).
+   - Skontroluj historię SOAP i logi serwera na wystąpienie tagów `Envelope`.
+5. Sprawdź łączenie we `WSDL_URL` klienta pod kątem korzystania z `https://`.

@@ -1,26 +1,24 @@
-# Implementation Plan: QR Code Ticket Download
+# Plan Implementacji: Generowanie Kodu QR
 
-The goal is to implement a new feature that generates a QR code containing flight reservation details. The user should be able to download this QR code as a `.png` file directly from the reservation confirmation page, alongside the existing PDF ticket.
+Celem jest zaimplementowanie funkcji generującej kod QR z zapisanymi szczegółami dokonanej rezerwacji lotu. Użytkownik powinien mieć możliwość ściągnięcia obrazu `.png` wraz z biletem po utworzeniu i potwierdzeniu operacji rezerwacji.
 
-## Proposed Changes
+## Proponowane Zmiany
 
-### 1. Backend Updates (Java)
+### 1. Zmiany Backend (Java)
 
-- **`pom.xml`**: Add the `zxing` library dependencies (`com.google.zxing:core` and `com.google.zxing:javase`) to enable QR code generation.
-- **`TicketQrCodeGenerator.java`**: Create a new utility class that takes a `Reservation` object, extracts the flight data into a readable string, and uses `zxing` to generate a PNG byte array containing the QR code.
-- **`FlightBookingService.java`**: Add a new SOAP method signature: `DataHandler getTicketQRCode(@WebParam(name = "reservationId") String reservationId);`
-- **`FlightBookingServiceImpl.java`**: Implement the new `getTicketQRCode` method. It will fetch the reservation, pass it to the `TicketQrCodeGenerator`, and return the generated PNG byte array wrapped in a `DataHandler` (via MTOM).
+- **`pom.xml`**: Wdrożenie zależności projektowych dla biblioteki `zxing` (`com.google.zxing:core` i `com.google.zxing:javase`) wymaganych przy rysowaniu kodu QR.
+- **`TicketQrCodeGenerator.java`**: Stworzenie klasy narzędziowej budującej informacje w tekst połączony z obrazem na bazie właściwości instancji obiektu klasy rezerwacji.
+- **`FlightBookingService.java`**: Dołożenie żądania pobierania do interfejsów SOAP: `DataHandler getTicketQRCode(@WebParam(name = "reservationId") String reservationId);`
+- **`FlightBookingServiceImpl.java`**: Obsłużenie zadeklarowanej metody i powiązanie z odpowiedzią mechanizmu MTOM (DataHandler operujący obrazem).
 
-### 2. Client Updates (Python)
+### 2. Zmiany u Klienta (Python)
 
-- **`app.py`**: Add a new Flask route `@app.route('/download_qrcode/<res_id>')`. This route will call the new `getTicketQRCode` SOAP method and use Flask's `send_file` to serve the PNG file to the user.
-- **`reservation.html`**: Add a new "Download QR Code (PNG)" button next to the existing "Download E-Ticket (PDF)" button.
+- **`app.py`**: Ścieżka aplikacyjna `@app.route('/download_qrcode/<res_id>')` korzystająca z Flaskowego transferu plików `send_file` w koordynacji z otrzymanym strumieniem ze żądania SOAP.
+- **`reservation.html`**: Opcjonalny odnośnik przycisku "Pobierz Kod QR (PNG)" wizualnie dostosowany do poprzedniego klawisza.
 
-## Verification Plan
-1. Add dependencies and implement the Java code.
-2. Build the backend using `mvn clean package` and redeploy to Payara Server.
-3. Update the Python client to call the new WSDL method.
-4. Book a flight, navigate to the confirmation page, and verify both buttons are visible.
-5. Click the QR code button, download the PNG, and scan it with a smartphone to ensure it works.
-
-**Review Required**: Please review this plan. Once you approve, I will proceed with writing the code and updating the files.
+## Plan Weryfikacji
+1. Zapisz wymagania i dodaj pakiety Java.
+2. Zbuduj ponownie moduł pod komendą `mvn clean package` i uaktualnij publikację oprogramowania serwera w środowisku aplikacyjnym.
+3. Dokończ routing kodu klienta pythona wywołując zapotrzebowanie nowego wezwania `getTicketQRCode`.
+4. Przejdź jako podróżny do akceptacji na formularzu sprawdzając obecność obu pobierań.
+5. Zeskanuj wynik na ekranie by zdiagnozować funkcjonalność wbudowanych detali.

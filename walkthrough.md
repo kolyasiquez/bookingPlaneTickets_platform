@@ -1,45 +1,45 @@
-# Walkthrough: Airline Ticket Booking System
+# Przewodnik: System Rezerwacji Biletów Lotniczych
 
-The project has been successfully scaffolded and customized for Java 8 (JAX-WS/Payara 5) and Python.
+Projekt został pomyślnie wygenerowany i dostosowany dla Javy 8 (JAX-WS/Payara 5) oraz Pythona.
 
-## Components Created
+## Utworzone komponenty
 
-### 1. Java Backend (`backend/`)
-- **Maven Project**: Configured for Java EE 8 (`javax.*` imports).
-- **Service**: `FlightBookingServiceImpl` exposes endpoints for searching flights, booking tickets, and checking reservations.
-- **MTOM (Binary Attachments)**: The `getTicketPDF` method is annotated with `@MTOM` and returns a `DataHandler` which sends a generated PDF (using Apache PDFBox) as a binary SOAP attachment.
-- **Handlers**: Implemented `LoggingHandler` mapped in `handlers.xml`. It intercepts all SOAP messages and prints them to the Payara server log, satisfying the requirement to present live SOAP messages.
+### 1. Backend Java (`backend/`)
+- **Projekt Maven**: Skonfigurowany pod Java EE 8 (importy `javax.*`).
+- **Usługa**: `FlightBookingServiceImpl` udostępnia punkty końcowe do wyszukiwania lotów, rezerwacji biletów oraz sprawdzania rezerwacji.
+- **MTOM (Załączniki binarne)**: Metoda `getTicketPDF` zawiera adnotację `@MTOM` i zwraca obiekt `DataHandler`, który wysyła wygenerowany dokument PDF (używając Apache PDFBox) w formie załącznika binarnego SOAP.
+- **Handlery**: Zaimplementowano `LoggingHandler` i zmapowano go w pliku `handlers.xml`. Przechwytuje on wszystkie wiadomości SOAP i wypisuje je w logach serwera Payara, co spełnia wymóg prezentacji wiadomości SOAP na żywo.
 
-### 2. Python Client (`client/`)
-- **Web App**: A modern, styled web application using Flask.
-- **SOAP Client**: Uses `zeep` to communicate with the Java service.
-- **SSL/TLS**: Configured to ignore self-signed certificate warnings and connect to Payara via HTTPS on port `8181`.
-- **Pages**: Includes flight searching, booking, and an option to download the E-Ticket directly via MTOM.
+### 2. Klient Python (`client/`)
+- **Aplikacja Webowa**: Nowoczesna, ostylowana aplikacja napisana we Flasku.
+- **Klient SOAP**: Korzysta z biblioteki `zeep` do komunikacji z usługą Java.
+- **SSL/TLS**: Skonfigurowany do ignorowania ostrzeżeń o certyfikatach self-signed oraz łączenia się z Payarą przez HTTPS na porcie `8181`.
+- **Strony**: Zawiera widoki wyszukiwania, rezerwacji i możliwości bezpośredniego pobrania E-Biletu poprzez mechanizm MTOM.
 
-### 3. Documentation (`docs/`)
-- `project_description.md`: Overview of architecture and technologies.
-- `WSDL_description.md`: Documentation of the exposed WSDL contract.
-- `SOAP_messages_examples.md`: Examples of raw SOAP envelopes including an MTOM response.
-- `instructions_for_external_client.md`: Instructions for connecting third-party clients to the platform.
+### 3. Dokumentacja (`docs/`)
+- `project_description.md`: Przegląd architektury oraz technologii.
+- `WSDL_description.md`: Dokumentacja wystawionego kontraktu WSDL.
+- `SOAP_messages_examples.md`: Przykłady wiadomości SOAP, z uwzględnieniem odpowiedzi MTOM.
+- `instructions_for_external_client.md`: Instrukcje podłączenia zewnętrznych klientów do platformy.
 
-## How to Run
+## Uruchomienie
 
-### Step 1: Backend (Payara)
-1. Open the `backend` directory in your IDE (IntelliJ, Eclipse, NetBeans) as a Maven project.
-2. Build the `.war` artifact.
-3. Deploy the `.war` to your local Payara 5 server.
-4. Verify the WSDL is available at: `https://localhost:8181/bookingPlaneTickets-backend-1.0-SNAPSHOT/FlightBookingServiceImplService?wsdl` (Adjust the URL if your IDE deploys it under a different context root).
+### Krok 1: Backend (Payara)
+1. Otwórz katalog `backend` w IDE (np. IntelliJ, Eclipse, NetBeans) jako projekt Maven.
+2. Zbuduj artefakt `.war`.
+3. Wdróż plik `.war` na lokalnym serwerze Payara 5.
+4. Upewnij się, że WSDL jest dostępny pod adresem: `https://localhost:8181/bookingPlaneTickets-backend-1.0-SNAPSHOT/FlightBookingServiceImplService?wsdl` (dostosuj ścieżkę, jeśli IDE publikuje pod innym rootem).
 
-### Step 2: Frontend (Python)
-1. Ensure Python 3 is installed.
-2. Open a terminal in the `client` directory.
-3. Install dependencies: `pip install -r requirements.txt`
-4. Run the app: `python app.py`
-5. Open your browser and navigate to `http://localhost:5000`.
+### Krok 2: Frontend (Python)
+1. Upewnij się, że masz zainstalowanego Pythona 3.
+2. Otwórz terminal w katalogu `client`.
+3. Zainstaluj zależności: `pip install -r requirements.txt`
+4. Uruchom aplikację: `python app.py`
+5. Otwórz przeglądarkę pod adresem `http://localhost:5000`.
 
-### Presentation Tips
-- Show the Java code (Handlers, MTOM).
-- Run the Python app and book a ticket.
-- Show the downloaded PDF ticket.
-- Check Payara console logs to show the raw SOAP envelopes intercepted by the `LoggingHandler`.
-- Note the connection is made to `https://localhost:8181/...`, fulfilling the SSL requirement.
+### Wskazówki do prezentacji
+- Zaprezentuj kod Javy (Handlery, MTOM).
+- Uruchom aplikację kliencką Pythona i dokonaj rezerwacji.
+- Pokaż pobrany bilet PDF.
+- Pokaż konsolę logów serwera Payara, aby wyświetlić struktury przesyłanych wiadomości SOAP przechwycone przez `LoggingHandler`.
+- Zaznacz, że nawiązywane jest połączenie z `https://localhost:8181/...`, spełniające wymóg szyfrowania SSL.
