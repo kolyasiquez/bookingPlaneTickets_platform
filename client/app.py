@@ -87,7 +87,20 @@ def book():
     # nie będzie pasował do adresu 'localhost'.
     webhook_url = "https://localhost:9999/3f6b1e96-47b2-4e1c-b5e8-b5340f255c29"
     try:
-        requests.post(webhook_url, json={"flightId": flight_id, "passengerName": passenger_name}, verify=False)
+        # Tworzymy ręcznie kopertę SOAP (XML) imitującą to, co wysyła biblioteka Zeep
+        soap_xml = f"""<?xml version="1.0" encoding="utf-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://service.airline.com/">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <ser:bookTicket>
+         <flightId>{flight_id}</flightId>
+         <passengerName>{passenger_name}</passengerName>
+      </ser:bookTicket>
+   </soapenv:Body>
+</soapenv:Envelope>"""
+        
+        headers = {'Content-Type': 'text/xml; charset=utf-8'}
+        requests.post(webhook_url, data=soap_xml.encode('utf-8'), headers=headers, verify=False)
     except Exception as e:
         print(f"Błąd wysyłania na webhook: {e}")
     # ---------------------------
