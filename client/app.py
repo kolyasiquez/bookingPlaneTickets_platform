@@ -13,7 +13,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 app = Flask(__name__)
 
 # WSDL URL - Adjust port 8181 for HTTPS, or 8080 for HTTP if needed.
-WSDL_URL = 'https://172.20.10.4:8182/airline-service/FlightBookingServiceImplService?wsdl'
+WSDL_URL = 'https://localhost:8181/airline-service/FlightBookingServiceImplService?wsdl'
 
 # Configure zeep to ignore SSL verification for local self-signed certs
 session = requests.Session()
@@ -80,6 +80,17 @@ def search():
 def book():
     flight_id = request.form.get('flightId')
     passenger_name = request.form.get('passengerName')
+    
+    # --- TEST DLA WYKŁADOWCY ---
+    # Wysyłamy kopię danych na Webhook przez TCP Monitor.
+    # Wymaga wyłączenia weryfikacji certyfikatu (verify=False), bo certyfikat webhook.site 
+    # nie będzie pasował do adresu 'localhost'.
+    webhook_url = "https://localhost:9999/3f6b1e96-47b2-4e1c-b5e8-b5340f255c29"
+    try:
+        requests.post(webhook_url, json={"flightId": flight_id, "passengerName": passenger_name}, verify=False)
+    except Exception as e:
+        print(f"Błąd wysyłania na webhook: {e}")
+    # ---------------------------
     
     global client
     if client is None:
