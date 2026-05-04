@@ -49,7 +49,10 @@ def get_country_info(city):
         'Warsaw': 'PL',
         'London': 'GB',
         'Paris': 'FR',
-        'Berlin': 'DE'
+        'Berlin': 'DE',
+        'Kyiv': 'UA',
+        'Kharkiv': 'UA',
+        'Lviv': 'UA'
     }
     iso_code = mapping.get(city)
     if not iso_code or not external_client:
