@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, send_file
-from zeep import Client
+from zeep import Client, Plugin
 from zeep.transports import Transport
+from lxml import etree
 import requests
 import io
 import urllib3
@@ -19,6 +20,19 @@ WSDL_URL = 'https://localhost:8181/airline-service/FlightBookingServiceImplServi
 session = requests.Session()
 session.verify = False
 transport = Transport(session=session)
+
+class WebhookPlugin(Plugin):
+    def egress(self, envelope, http_headers, operation, binding_options):
+        # Wysyłamy PRAWDZIWY wygenerowany przez Zeep XML na Webhook.site!
+        try:
+            webhook_url = "https://localhost:9999/3f6b1e96-47b2-4e1c-b5e8-b5340f255c29"
+            xml_data = etree.tostring(envelope, pretty_print=True)
+            # Używamy wygenerowanych nagłówków i XML-a, wysyłając kopię na serwer testowy
+            requests.post(webhook_url, data=xml_data, headers={'Content-Type': 'text/xml; charset=utf-8'}, verify=False)
+        except Exception as e:
+            print(f"Błąd WebhookPlugin: {e}")
+        return envelope, http_headers
+
 client = None
 
 # External SOAP Service - Country Info
@@ -63,7 +77,7 @@ def search():
     
     global client
     if client is None:
-        client = Client(WSDL_URL, transport=transport)
+        client = Client(WSDL_URL, transport=transport, plugins=[WebhookPlugin()])
         
     try:
         flights = client.service.searchFlights(cityFrom=city_from, cityTo=city_to, date=date)
@@ -81,33 +95,9 @@ def book():
     flight_id = request.form.get('flightId')
     passenger_name = request.form.get('passengerName')
     
-    # --- TEST DLA WYKŁADOWCY ---
-    # Wysyłamy kopię danych na Webhook przez TCP Monitor.
-    # Wymaga wyłączenia weryfikacji certyfikatu (verify=False), bo certyfikat webhook.site 
-    # nie będzie pasował do adresu 'localhost'.
-    webhook_url = "https://localhost:9999/3f6b1e96-47b2-4e1c-b5e8-b5340f255c29"
-    try:
-        # Tworzymy ręcznie kopertę SOAP (XML) imitującą to, co wysyła biblioteka Zeep
-        soap_xml = f"""<?xml version="1.0" encoding="utf-8"?>
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://service.airline.com/">
-   <soapenv:Header/>
-   <soapenv:Body>
-      <ser:bookTicket>
-         <flightId>{flight_id}</flightId>
-         <passengerName>{passenger_name}</passengerName>
-      </ser:bookTicket>
-   </soapenv:Body>
-</soapenv:Envelope>"""
-        
-        headers = {'Content-Type': 'text/xml; charset=utf-8'}
-        requests.post(webhook_url, data=soap_xml.encode('utf-8'), headers=headers, verify=False)
-    except Exception as e:
-        print(f"Błąd wysyłania na webhook: {e}")
-    # ---------------------------
-    
     global client
     if client is None:
-        client = Client(WSDL_URL, transport=transport)
+        client = Client(WSDL_URL, transport=transport, plugins=[WebhookPlugin()])
         
     try:
         reservation_id = client.service.bookTicket(flightId=flight_id, passengerName=passenger_name)
@@ -119,7 +109,7 @@ def book():
 def reservation(res_id):
     global client
     if client is None:
-        client = Client(WSDL_URL, transport=transport)
+        client = Client(WSDL_URL, transport=transport, plugins=[WebhookPlugin()])
         
     try:
         res = client.service.checkReservation(reservationId=res_id)
@@ -133,7 +123,7 @@ def reservation(res_id):
 def download_ticket(res_id):
     global client
     if client is None:
-        client = Client(WSDL_URL, transport=transport)
+        client = Client(WSDL_URL, transport=transport, plugins=[WebhookPlugin()])
         
     try:
         # getTicketPDF returns MTOM attachment as bytes in python
@@ -153,7 +143,7 @@ def download_ticket(res_id):
 def download_qrcode(res_id):
     global client
     if client is None:
-        client = Client(WSDL_URL, transport=transport)
+        client = Client(WSDL_URL, transport=transport, plugins=[WebhookPlugin()])
         
     try:
         qr_data = client.service.getTicketQRCode(reservationId=res_id)
