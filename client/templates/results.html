@@ -16,7 +16,15 @@
             <tbody>
                 {% for flight in flights %}
                 <tr>
-                    <td><strong>{{ flight.cityFrom }}</strong> to <strong>{{ flight.cityTo }}</strong></td>
+                    <td>
+                        <strong>{{ flight.cityFrom }}</strong> to <strong>{{ flight.cityTo }}</strong>
+                        {% if flight.country_info %}
+                            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <img src="{{ flight.country_info.flag }}" alt="flag" style="height: 12px; border: 1px solid #ddd;">
+                                {{ flight.country_info.name }} (Currency: {{ flight.country_info.currency }})
+                            </div>
+                        {% endif %}
+                    </td>
                     <td>{{ flight.date }} {{ flight.time }}</td>
                     <td>${{ flight.price }}</td>
                     <td>

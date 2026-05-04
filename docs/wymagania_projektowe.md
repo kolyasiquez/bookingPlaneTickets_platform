@@ -4,9 +4,10 @@
 
 **3 niezależne moduły**
 
-1. **Moduł Backend (Java EE)**: Business logic and SOAP service.
-2. **Moduł Klient (Python Flask)**: Web user interface.
-3. **Moduł Danych i Mediów**: Persistence (JSON) and MTOM generation (PDF/QR).
+1. **Moduł Backend (Java EE)**: Logika biznesowa i usługa SOAP (Serwer).
+2. **Moduł Klient (Python Flask)**: Interfejs użytkownika (Klient).
+3. **Moduł Powiadomień (Python)**: Niezależna usługa (`notification-service`) logująca zdarzenia rezerwacji.
+*Dodatkowo: System integruje się z **zewnętrznym webserwisem SOAP** (CountryInfoService) do pobierania danych o krajach.*
 
 **Serwer aplikacji / Docker**
 Warstwa serwerowa została wdrożona na pełnoprawnym serwerze aplikacyjnym Java EE Payara. Środowisko to zapewnia izolację oraz obsługę całego cyklu życia stworzonego web serwisu.

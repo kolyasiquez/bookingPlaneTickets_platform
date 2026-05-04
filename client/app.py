@@ -19,11 +19,37 @@ WSDL_URL = 'https://172.20.10.4:8182/airline-service/FlightBookingServiceImplSer
 session = requests.Session()
 session.verify = False
 transport = Transport(session=session)
+client = None
+
+# External SOAP Service - Country Info
+EXTERNAL_WSDL = 'http://webservices.oorsprong.org/websamples.countryinfo/CountryInfoService.wso?WSDL'
 try:
-    client = Client(WSDL_URL, transport=transport)
+    external_client = Client(EXTERNAL_WSDL)
 except Exception as e:
-    print(f"Warning: Could not connect to WSDL at startup. Ensure Payara is running. Error: {e}")
-    client = None
+    print(f"Warning: Could not connect to external SOAP service. Error: {e}")
+    external_client = None
+
+def get_country_info(city):
+    # Simple mapping for demo purposes
+    mapping = {
+        'Warsaw': 'PL',
+        'London': 'GB',
+        'Paris': 'FR',
+        'Berlin': 'DE'
+    }
+    iso_code = mapping.get(city)
+    if not iso_code or not external_client:
+        return None
+    try:
+        # FullCountryInfo gives us currency, flag, name etc.
+        info = external_client.service.FullCountryInfo(sCountryISOCode=iso_code)
+        return {
+            'name': info.sName,
+            'currency': info.sCurrencyISOCode,
+            'flag': info.sCountryFlag
+        }
+    except:
+        return None
 
 @app.route('/')
 def index():
@@ -41,6 +67,11 @@ def search():
         
     try:
         flights = client.service.searchFlights(cityFrom=city_from, cityTo=city_to, date=date)
+        
+        # Enrich with external SOAP data
+        for flight in flights:
+            flight.country_info = get_country_info(flight.cityTo)
+            
         return render_template('results.html', flights=flights)
     except Exception as e:
         return f"Error connecting to service: {e}"
