@@ -25,7 +25,7 @@ class WebhookPlugin(Plugin):
     def egress(self, envelope, http_headers, operation, binding_options):
         # Wysyłamy PRAWDZIWY wygenerowany przez Zeep XML na Webhook.site!
         try:
-            webhook_url = "https://localhost:9999/3f6b1e96-47b2-4e1c-b5e8-b5340f255c29"
+            webhook_url = "https://localhost:8182/3f6b1e96-47b2-4e1c-b5e8-b5340f255c29"
             xml_data = etree.tostring(envelope, pretty_print=True)
             # Używamy wygenerowanych nagłówków i XML-a, wysyłając kopię na serwer testowy
             requests.post(webhook_url, data=xml_data, headers={'Content-Type': 'text/xml; charset=utf-8'}, verify=False)
