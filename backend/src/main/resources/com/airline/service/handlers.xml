@@ -1,8 +1,1 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<handler-chains xmlns="http://java.sun.com/xml/ns/javaee">
-    <handler-chain>
-        <handler>
-            <handler-class>com.airline.handlers.LoggingHandler</handler-class>
-        </handler>
-    </handler-chain>
-</handler-chains>
+<!-- Deprecated: Removed during migration from SOAP to REST. -->

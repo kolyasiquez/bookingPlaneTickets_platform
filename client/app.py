@@ -1,7 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, send_file
-from zeep import Client, Plugin
-from zeep.transports import Transport
-from lxml import etree
+from zeep import Client
 import requests
 import io
 import urllib3
@@ -13,29 +11,14 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 app = Flask(__name__)
 
-# WSDL URL - Adjust port 8181 for HTTPS, or 8080 for HTTP if needed.
-WSDL_URL = 'https://localhost:8181/airline-service/FlightBookingServiceImplService?wsdl'
+# REST API Base URL
+API_BASE_URL = 'https://localhost:8181/airline-service/api/booking'
 
-# Configure zeep to ignore SSL verification for local self-signed certs
+# Configure requests session to ignore SSL verification for local self-signed certs
 session = requests.Session()
 session.verify = False
-transport = Transport(session=session)
 
-class WebhookPlugin(Plugin):
-    def egress(self, envelope, http_headers, operation, binding_options):
-        # Wysyłamy PRAWDZIWY wygenerowany przez Zeep XML na Webhook.site!
-        try:
-            webhook_url = "https://localhost:8182/3f6b1e96-47b2-4e1c-b5e8-b5340f255c29"
-            xml_data = etree.tostring(envelope, pretty_print=True)
-            # Używamy wygenerowanych nagłówków i XML-a, wysyłając kopię na serwer testowy
-            requests.post(webhook_url, data=xml_data, headers={'Content-Type': 'text/xml; charset=utf-8'}, verify=False)
-        except Exception as e:
-            print(f"Błąd WebhookPlugin: {e}")
-        return envelope, http_headers
-
-client = None
-
-# External SOAP Service - Country Info
+# External SOAP Service - Country Info (Preserved per requirements)
 EXTERNAL_WSDL = 'http://webservices.oorsprong.org/websamples.countryinfo/CountryInfoService.wso?WSDL'
 try:
     external_client = Client(EXTERNAL_WSDL)
@@ -78,16 +61,22 @@ def search():
     city_to = request.form.get('cityTo')
     date = request.form.get('date')
     
-    global client
-    if client is None:
-        client = Client(WSDL_URL, transport=transport, plugins=[WebhookPlugin()])
-        
     try:
-        flights = client.service.searchFlights(cityFrom=city_from, cityTo=city_to, date=date)
+        # Build query parameters
+        params = {}
+        if city_from: params['cityFrom'] = city_from
+        if city_to: params['cityTo'] = city_to
+        if date: params['date'] = date
+        
+        response = session.get(f"{API_BASE_URL}/flights", params=params, timeout=10)
+        if response.status_code != 200:
+            return f"Error connecting to service: Status code {response.status_code}"
+            
+        flights = response.json()
         
         # Enrich with external SOAP data
         for flight in flights:
-            flight.country_info = get_country_info(flight.cityTo)
+            flight['country_info'] = get_country_info(flight['cityTo'])
             
         return render_template('results.html', flights=flights)
     except Exception as e:
@@ -98,66 +87,68 @@ def book():
     flight_id = request.form.get('flightId')
     passenger_name = request.form.get('passengerName')
     
-    global client
-    if client is None:
-        client = Client(WSDL_URL, transport=transport, plugins=[WebhookPlugin()])
-        
     try:
-        reservation_id = client.service.bookTicket(flightId=flight_id, passengerName=passenger_name)
+        payload = {
+            'flightId': int(flight_id) if flight_id else None,
+            'passengerName': passenger_name
+        }
+        response = session.post(f"{API_BASE_URL}/book", json=payload, timeout=10)
+        if response.status_code != 200:
+            return f"Error booking ticket: Status code {response.status_code}"
+            
+        res_data = response.json()
+        reservation_id = res_data.get('reservationId')
         return redirect(url_for('reservation', res_id=reservation_id))
     except Exception as e:
         return f"Error booking ticket: {e}"
 
 @app.route('/reservation/<res_id>')
 def reservation(res_id):
-    global client
-    if client is None:
-        client = Client(WSDL_URL, transport=transport, plugins=[WebhookPlugin()])
-        
     try:
-        res = client.service.checkReservation(reservationId=res_id)
-        if not res:
+        response = session.get(f"{API_BASE_URL}/reservation/{res_id}", timeout=10)
+        if response.status_code == 404:
             return "Reservation not found."
+        elif response.status_code != 200:
+            return f"Error fetching reservation: Status code {response.status_code}"
+            
+        res = response.json()
         return render_template('reservation.html', reservation=res)
     except Exception as e:
         return f"Error fetching reservation: {e}"
 
 @app.route('/download_ticket/<res_id>')
 def download_ticket(res_id):
-    global client
-    if client is None:
-        client = Client(WSDL_URL, transport=transport, plugins=[WebhookPlugin()])
-        
     try:
-        # getTicketPDF returns MTOM attachment as bytes in python
-        pdf_data = client.service.getTicketPDF(reservationId=res_id)
-        if pdf_data:
-            return send_file(
-                io.BytesIO(pdf_data),
-                mimetype='application/pdf',
-                as_attachment=True,
-                download_name=f'ticket_{res_id}.pdf'
-            )
-        return "Ticket not found or error generating PDF."
+        response = session.get(f"{API_BASE_URL}/reservation/{res_id}/pdf", timeout=15)
+        if response.status_code == 404:
+            return "Ticket not found."
+        elif response.status_code != 200:
+            return f"Error downloading ticket: Status code {response.status_code}"
+            
+        return send_file(
+            io.BytesIO(response.content),
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=f'ticket_{res_id}.pdf'
+        )
     except Exception as e:
         return f"Error downloading ticket: {e}"
 
 @app.route('/download_qrcode/<res_id>')
 def download_qrcode(res_id):
-    global client
-    if client is None:
-        client = Client(WSDL_URL, transport=transport, plugins=[WebhookPlugin()])
-        
     try:
-        qr_data = client.service.getTicketQRCode(reservationId=res_id)
-        if qr_data:
-            return send_file(
-                io.BytesIO(qr_data),
-                mimetype='image/png',
-                as_attachment=True,
-                download_name=f'qrcode_{res_id}.png'
-            )
-        return "Ticket not found or error generating QR Code."
+        response = session.get(f"{API_BASE_URL}/reservation/{res_id}/qrcode", timeout=15)
+        if response.status_code == 404:
+            return "QR Code not found."
+        elif response.status_code != 200:
+            return f"Error downloading QR Code: Status code {response.status_code}"
+            
+        return send_file(
+            io.BytesIO(response.content),
+            mimetype='image/png',
+            as_attachment=True,
+            download_name=f'qrcode_{res_id}.png'
+        )
     except Exception as e:
         return f"Error downloading QR Code: {e}"
 

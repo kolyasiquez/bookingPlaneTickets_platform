@@ -4,13 +4,13 @@
 
 **3 niezależne moduły**
 
-1. **Moduł Backend (Java EE)**: Logika biznesowa i usługa SOAP (Serwer).
-2. **Moduł Klient (Python Flask)**: Interfejs użytkownika (Klient).
-3. **Moduł Powiadomień (Python)**: Niezależna usługa (`notification-service`) logująca zdarzenia rezerwacji.
+1. **Moduł Backend (Java EE)**: Logika biznesowa i usługa REST (Serwer JAX-RS).
+2. **Moduł Klient (Python Flask)**: Interfejs użytkownika (Klient wykonujący REST HTTP requests).
+3. **Moduł Powiadomień (Python)**: Niezależna usługa (`notification-service`) logująca zdarzenia rezerwacji za pomocą żądań POST.
 *Dodatkowo: System integruje się z **zewnętrznym webserwisem SOAP** (CountryInfoService) do pobierania danych o krajach.*
 
 **Serwer aplikacji / Docker**
-Warstwa serwerowa została wdrożona na pełnoprawnym serwerze aplikacyjnym Java EE Payara. Środowisko to zapewnia izolację oraz obsługę całego cyklu życia stworzonego web serwisu.
+Warstwa serwerowa została wdrożona na pełnoprawnym serwerze aplikacyjnym Java EE Payara. Środowisko to zapewnia izolację oraz obsługę całego cyklu życia stworzonego REST API.
 Lokalizacja: Serwer aplikacyjny hostujący kod z katalogu `backend`.
 
 **2 języki / technologie**
@@ -19,7 +19,7 @@ Lokalizacja: Kod w katalogach `backend` (Java) oraz `client` (Python).
 
 **Szyfrowanie SSL/TLS komunikacji serwera z klientem**
 Żądania pomiędzy Pythonem a serwerem Java są realizowane za pomocą protokołu HTTPS, aby zapewnić poufność danych. W skrypcie wskazano port szyfrowany serwera i wdrożono odpowiednią obsługę certyfikatów.
-Lokalizacja: Zmienna z adresem `WSDL_URL` w pliku `client/app.py`.
+Lokalizacja: Zmienna z adresem `API_BASE_URL` w pliku `client/app.py`.
 
 **Przechowywanie danych pomiędzy restartami serwera**
 Informacje o lotach oraz dokonanych rezerwacjach są utrwalane w sposób umożliwiający ich zachowanie po ponownym uruchomieniu serwera aplikacyjnego. Stan aplikacji przechowywany jest w bezpieczny sposób po stronie warstwy biznesowej.
@@ -32,7 +32,7 @@ Lokalizacja: Zestaw szablonów HTML w katalogu `client/templates`.
 ## Wymagania na 12 punktów
 
 **Przesyłanie plików**
-Aplikacja ma zaimplementowane płynne przekazywanie plików z serwera do przeglądarki użytkownika. Pozwala to na wygenerowanie i ściągnięcie oficjalnego biletu jako dokumentu PDF oraz kodu QR jako obrazu PNG.
+Aplikacja ma zaimplementowane płynne przekazywanie plików z serwera do przeglądarki użytkownika. Pozwala to na wygenerowanie i ściągnięcie oficjalnego biletu jako dokumentu PDF oraz kodu QR jako obrazu PNG za pomocą standardowych REST-owych typów mediów (`application/pdf`, `image/png`).
 Lokalizacja: Metody zwracające dokumenty takie jak `/download_ticket` w pliku `client/app.py`.
 
 **Rozbudowany CRUD, więcej niż jeden formularz**
@@ -40,7 +40,7 @@ Dla przejrzystości systemu wprowadzono wiele połączonych formularzy operując
 Lokalizacja: Widoki zapytań i rezerwacji konfigurowane przez plik `client/app.py`.
 
 **Monitorowanie komunikacji**
-Komunikację miedzy poszczególnymi elementami można analizować wykorzystując standardowe logi serwerowe. Konsola aplikacji klienckiej zwraca kody odpowiedzi takie jak 200 i 302, co pozwala błyskawicznie sprawdzić stan sieci.
+Komunikację miedzy poszczególnymi elementami można analizować wykorzystując standardowe logi serwerowe. Konsola aplikacji klienckiej zwraca kody odpowiedzi takie jak 200 i 302, co pozwala błyskawicznie sprawdzić stan sieci. Ponadto, JAX-RS LoggingFilter rejestruje ruch żądań REST na serwerze.
 Lokalizacja: Logi w konsolach uruchomionego klienta Python oraz serwera Payara/GlassFish.
 
 ## Wymagania na 9 punktów
@@ -49,9 +49,9 @@ Lokalizacja: Logi w konsolach uruchomionego klienta Python oraz serwera Payara/G
 Cel, sposób instalacji oraz pokrycie wymagań opisane jest jasnym i dostępnym językiem w plikach pomocniczych. Ten plik stanowi potwierdzenie implementacji punktów zaliczeniowych całego środowiska.
 Lokalizacja: Aktualny dokument `docs/General_Documentation.md`.
 
-**Klient i serwer SOAP**
-Architektura aplikacji została oparta o standard komunikacji SOAP w celu wymiany danych. Serwer udostępnia deskryptor WSDL, który jest bezbłędnie asymilowany przez bibliotekę klienta.
-Lokalizacja: Użycie parsera `zeep` po stronie Pythona oraz web service po stronie Javy.
+**Klient i serwer REST**
+Architektura aplikacji została oparta o standard komunikacji REST w celu wymiany danych. Serwer udostępnia eleganckie punkty końcowe JAX-RS, które zwracają dane strukturalne JSON.
+Lokalizacja: Użycie biblioteki `requests` po stronie Pythona oraz REST resources (JAX-RS) po stronie Javy.
 
 **Klient okienkowy lub w przeglądarce**
 System po stronie użytkownika jest zwykłą aplikacją przeglądarkową renderującą HTML. Brak jest konieczności uruchamiania ciężkiego klienta desktopowego, wystarczy dowolna nowoczesna przeglądarka internetowa.
