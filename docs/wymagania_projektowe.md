@@ -1,66 +1,52 @@
-# Dokumentacja Realizacji Wymagań
+# Dokumentacja Realizacji Wymagań (Ocena 5.0)
 
-## Wymagania na 15 punktów
+Ten dokument szczegółowo mapuje zrealizowane funkcjonalności RESTful Web Services na kryteria wymagane do uzyskania oceny **5.0**.
 
-**3 niezależne moduły**
+---
 
-1. **Moduł Backend (Java EE)**: Logika biznesowa i usługa REST (Serwer JAX-RS).
-2. **Moduł Klient (Python Flask)**: Interfejs użytkownika (Klient wykonujący REST HTTP requests).
-3. **Moduł Powiadomień (Python)**: Niezależna usługa (`notification-service`) logująca zdarzenia rezerwacji za pomocą żądań POST.
-*Dodatkowo: System integruje się z **zewnętrznym webserwisem SOAP** (CountryInfoService) do pobierania danych o krajach.*
+## 1. Spełnienie Podstawowych Wymagań RESTful WS
 
-**Serwer aplikacji / Docker**
-Warstwa serwerowa została wdrożona na pełnoprawnym serwerze aplikacyjnym Java EE Payara. Środowisko to zapewnia izolację oraz obsługę całego cyklu życia stworzonego REST API.
-Lokalizacja: Serwer aplikacyjny hostujący kod z katalogu `backend`.
+*   **Stworzenie Web Serwisu i Aplikacji Klienckiej**
+    *   **Serwer**: Zaimplementowany w języku Java przy użyciu **JAX-RS** (Jakarta EE 8) i wdrażany na serwerze aplikacji **Payara 5**. Udostępnia zasoby pod adresem bazowym `/api/booking`.
+    *   **Klient**: Napisany w języku **Python (Flask)** jako lekki interfejs webowy renderowany w przeglądarce, komunikujący się z backendem za pomocą standardowych zapytań HTTP.
+    *   *Lokalizacja*: Katalogi `backend` oraz `client`.
 
-**2 języki / technologie**
-Logika biznesowa web serwisu została przygotowana w technologii Java. Aplikacja kliencka interpretująca i prezentująca dane została zbudowana z wykorzystaniem języka Python i frameworka Flask.
-Lokalizacja: Kod w katalogach `backend` (Java) oraz `client` (Python).
+*   **Kompleksowa Dokumentacja**
+    *   Przygotowano rozbudowany dokument zawierający pełny opis architektury, specyfikację uwierzytelniania BasicAuth, schematy komunikatów HTTP Request/Response z nagłówkami, opis automatycznego generowania WADL oraz precyzyjne komendy `curl`/instrukcje Postmana dla zewnętrznego klienta.
+    *   *Lokalizacja*: [General_Documentation.md](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/docs/General_Documentation.md).
 
-**Szyfrowanie SSL/TLS komunikacji serwera z klientem**
-Żądania pomiędzy Pythonem a serwerem Java są realizowane za pomocą protokołu HTTPS, aby zapewnić poufność danych. W skrypcie wskazano port szyfrowany serwera i wdrożono odpowiednią obsługę certyfikatów.
-Lokalizacja: Zmienna z adresem `API_BASE_URL` w pliku `client/app.py`.
+---
 
-**Przechowywanie danych pomiędzy restartami serwera**
-Informacje o lotach oraz dokonanych rezerwacjach są utrwalane w sposób umożliwiający ich zachowanie po ponownym uruchomieniu serwera aplikacyjnego. Stan aplikacji przechowywany jest w bezpieczny sposób po stronie warstwy biznesowej.
-Lokalizacja: Konfiguracja persystencji oraz ziaren danych w katalogu `backend`.
+## 2. Implementacja Zaawansowanych Wymogów REST (JAX-RS)
 
-**Spójny, użyteczny, prosty w obsłudze interfejs**
-Front-end został napisany przejrzyście i zaprojektowany pod kątem wygody użytkownika docelowego. Każdy krok, od wyszukiwania po pobranie biletu, realizowany jest na prostej i czytelnej witrynie webowej.
-Lokalizacja: Zestaw szablonów HTML w katalogu `client/templates`.
+*   **Użycie Filtrów (Jersey / JAX-RS Filters)**
+    *   Wdrożono dwa filtry w pakiecie `com.airline.handlers` z adnotacją `@Provider`:
+        1.  `LoggingFilter` (nasłuchuje na wejściu i wyjściu, rejestruje metody, adresy URL i statusy HTTP w konsoli, zastępując HTTP Monitor).
+        2.  `SecurityFilter` (przechwytuje i autoryzuje żądania Basic Authentication).
+    *   *Lokalizacja*: [LoggingFilter.java](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/src/main/java/com/airline/handlers/LoggingFilter.java) oraz [SecurityFilter.java](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/src/main/java/com/airline/handlers/SecurityFilter.java).
 
-## Wymagania na 12 punktów
+*   **Implementacja HATEOAS (Hypermedia as the Engine of Application State)**
+    *   Modele zasobów zawierają listę `links` z polami `rel` i `href`. Adresy URL są wstrzykiwane w pełni dynamicznie na serwerze z wykorzystaniem adnotacji `@Context UriInfo`. Klient nawiguje do akcji (szukanie, szczegóły rezerwacji, pobranie PDF, pobranie QR kodu) za pomocą dostarczonych łącz.
+    *   *Lokalizacja*: Modele [Flight.java](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/src/main/java/com/airline/model/Flight.java), [Reservation.java](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/src/main/java/com/airline/model/Reservation.java) oraz zasób [FlightBookingResource.java](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/src/main/java/com/airline/service/FlightBookingResource.java).
 
-**Przesyłanie plików**
-Aplikacja ma zaimplementowane płynne przekazywanie plików z serwera do przeglądarki użytkownika. Pozwala to na wygenerowanie i ściągnięcie oficjalnego biletu jako dokumentu PDF oraz kodu QR jako obrazu PNG za pomocą standardowych REST-owych typów mediów (`application/pdf`, `image/png`).
-Lokalizacja: Metody zwracające dokumenty takie jak `/download_ticket` w pliku `client/app.py`.
+*   **Użycie Obsługi Błędów (Exception Mappers)**
+    *   Dzięki interfejsom `ExceptionMapper<E>` serwer przechwytuje wyjątki (np. nieistniejącą rezerwację `NotFoundException` lub ogólne błędy serwera `Throwable`) i mapuje je na ujednolicone, czytelne komunikaty JSON o odpowiednich statusach HTTP (np. 404, 500) zamiast surowych stron błędu serwera.
+    *   *Lokalizacja*: [EntityNotFoundExceptionMapper.java](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/src/main/java/com/airline/handlers/EntityNotFoundExceptionMapper.java) oraz [GenericExceptionMapper.java](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/src/main/java/com/airline/handlers/GenericExceptionMapper.java).
 
-**Rozbudowany CRUD, więcej niż jeden formularz**
-Dla przejrzystości systemu wprowadzono wiele połączonych formularzy operujących na różnych danych. Pierwszy z nich filtruje listę dostępnych lotów, a drugi przetwarza informacje o pasażerze by zatwierdzić rezerwację.
-Lokalizacja: Widoki zapytań i rezerwacji konfigurowane przez plik `client/app.py`.
+---
 
-**Monitorowanie komunikacji**
-Komunikację miedzy poszczególnymi elementami można analizować wykorzystując standardowe logi serwerowe. Konsola aplikacji klienckiej zwraca kody odpowiedzi takie jak 200 i 302, co pozwala błyskawicznie sprawdzić stan sieci. Ponadto, JAX-RS LoggingFilter rejestruje ruch żądań REST na serwerze.
-Lokalizacja: Logi w konsolach uruchomionego klienta Python oraz serwera Payara/GlassFish.
+## 3. Realizacja 3 Punktów Dodatkowych (Kryterium na Ocenę 5.0)
 
-## Wymagania na 9 punktów
+Aby otrzymać ocenę **5.0**, pomyślnie zrealizowano **3 dodatkowe punkty**:
 
-**Prosta dokumentacja**
-Cel, sposób instalacji oraz pokrycie wymagań opisane jest jasnym i dostępnym językiem w plikach pomocniczych. Ten plik stanowi potwierdzenie implementacji punktów zaliczeniowych całego środowiska.
-Lokalizacja: Aktualny dokument `docs/General_Documentation.md`.
+1.  **Napisanie klienta w innym języku niż serwer (Dodatkowy punkt 1)**
+    *   Serwer i logika biznesowa zostały napisane w języku **Java** (JAX-RS), natomiast cała aplikacja kliencka i jej interfejs webowy zostały zrealizowane w języku **Python** (Flask). Dane są wymieniane za pośrednictwem żądań JSON.
+    *   *Lokalizacja*: Folder `backend` (Java) i folder `client` (Python).
 
-**Klient i serwer REST**
-Architektura aplikacji została oparta o standard komunikacji REST w celu wymiany danych. Serwer udostępnia eleganckie punkty końcowe JAX-RS, które zwracają dane strukturalne JSON.
-Lokalizacja: Użycie biblioteki `requests` po stronie Pythona oraz REST resources (JAX-RS) po stronie Javy.
+2.  **Użycie elementów security - BasicAuth + SSL (Dodatkowy punkt 2)**
+    *   Wszystkie żądania REST-owe są zabezpieczone filtrem Basic Authentication (wymagającym loginu `admin` i hasła `admin123`). Ponadto cała komunikacja odbywa się przez szyfrowany protokół **HTTPS (SSL/TLS)** na porcie `8181` w Payara. Klient Flask automatycznie przesyła nagłówek BasicAuth w bezpiecznej sesji.
+    *   *Lokalizacja*: [SecurityFilter.java](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/src/main/java/com/airline/handlers/SecurityFilter.java) oraz [client/app.py](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/client/app.py).
 
-**Klient okienkowy lub w przeglądarce**
-System po stronie użytkownika jest zwykłą aplikacją przeglądarkową renderującą HTML. Brak jest konieczności uruchamiania ciężkiego klienta desktopowego, wystarczy dowolna nowoczesna przeglądarka internetowa.
-Lokalizacja: Działanie serwera deweloperskiego na porcie wewnątrz modułu `client`.
-
-**Prezentacja na dwóch komputerach lub VM**
-Aplikacja wykorzystuje parametryzację połączenia sieciowego, umożliwiając umiejscowienie serwera na maszynie wirtualnej w sieci (np. 172.20.10.4). Klient odpytuje bezpośrednio jej adres zamiast sztywnego łączenia się po łączu lokalnym.
-Lokalizacja: Przypisany adres IP z sieci w zmiennej konfiguracyjnej `client/app.py`.
-
-**CRUD dla co najmniej jednej klasy, lista obiektów**
-Oprogramowanie wdraża operacje odczytu bazy dostępnych lotów pod kątem określonych warunków. Pozwala też w czasie rzeczywistym tworzyć nowe modele rezerwacji w systemie, odczytywać ich dane i generować bilety.
-Lokalizacja: Trasy takie jak `/search` oraz `/book` uruchamiające operacje wewnątrz `client/app.py`.
+3.  **Podgląd komunikatów w HTTP Monitorze / Konsoli (Dodatkowy punkt 3)**
+    *   Serwer loguje na żywo wszystkie parametry nadchodzących zapytań (metody, nagłówki, zapytania URI) oraz wychodzących odpowiedzi (kody statusów HTTP) w konsoli serwera poprzez filtr Jersey `LoggingFilter`. Umożliwia to szczegółowe śledzenie i monitorowanie ruchu HTTP w czasie rzeczywistym. Przykładowe nagłówki zostały również szczegółowo rozpisane w dokumentacji pod kątem Postmana.
+    *   *Lokalizacja*: [LoggingFilter.java](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/src/main/java/com/airline/handlers/LoggingFilter.java) oraz rozdział 9 w [General_Documentation.md](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/docs/General_Documentation.md).

@@ -14,9 +14,11 @@ app = Flask(__name__)
 # REST API Base URL
 API_BASE_URL = 'https://localhost:8181/airline-service/api/booking'
 
-# Configure requests session to ignore SSL verification for local self-signed certs
+# Configure requests session to ignore SSL verification and use BasicAuth
 session = requests.Session()
 session.verify = False
+session.auth = ('admin', 'admin123')
+
 
 # External SOAP Service - Country Info (Preserved per requirements)
 EXTERNAL_WSDL = 'http://webservices.oorsprong.org/websamples.countryinfo/CountryInfoService.wso?WSDL'

@@ -1,17 +1,16 @@
-# Task List - SOAP to REST Migration
+# Task List - Advanced REST Features & 5.0 Grade Requirements
 
-- [x] Backend REST Migration (Java EE)
-    - [x] Create `RestApplication.java` under `com.airline`
-    - [x] Create `FlightBookingResource.java` under `com.airline.service`
-    - [x] Create `LoggingFilter.java` under `com.airline.handlers`
-    - [x] Delete SOAP endpoints: `FlightBookingService.java`, `FlightBookingServiceImpl.java`, `LoggingHandler.java`, and `handlers.xml`
-- [x] Client REST Migration (Python Flask)
-    - [x] Modify `client/app.py` to use `requests` calls instead of SOAP `zeep` client
-    - [x] Remove `zeep` and the SOAP webhook logic/plugins
-- [x] Documentation Updates
-    - [x] Update `docs/General_Documentation.md` with RESTful context
-    - [x] Update `docs/wymagania_projektowe.md`
+- [x] Backend Implementation
+    - [x] Update `Flight.java` and `Reservation.java` with HATEOAS properties
+    - [x] Implement `SecurityFilter.java` (Basic Authentication)
+    - [x] Implement JAX-RS Exception Mappers (`EntityNotFoundExceptionMapper.java`, `GenericExceptionMapper.java`)
+    - [x] Update `FlightBookingResource.java` to inject dynamic HATEOAS links
+- [x] Client Security Updates
+    - [x] Configure Basic Authentication (`session.auth`) in `client/app.py`
+- [x] Documentation Enhancements
+    - [x] Update `docs/General_Documentation.md` with WADL, sample request/responses, BasicAuth, HATEOAS, and Postman details
+    - [x] Update `docs/wymagania_projektowe.md` showing how 5.0 requirements are fulfilled
 - [x] Verification and Testing
-    - [x] Verify compilation and deployment on Payara
-    - [x] Run Flask client and notification service
-    - [x] Perform E2E flight search, booking, ticket download, and QR code view
+    - [x] Test Basic Authentication access control (unauthorized vs authorized)
+    - [x] Verify HATEOAS structures in JSON payloads
+    - [x] Verify E2E web operations

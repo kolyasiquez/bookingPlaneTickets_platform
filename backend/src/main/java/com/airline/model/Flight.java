@@ -3,6 +3,8 @@ package com.airline.model;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.ArrayList;
+import java.util.List;
 
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -13,6 +15,7 @@ public class Flight {
     private String date;
     private String time;
     private double price;
+    private List<Link> links = new ArrayList<>();
 
     public Flight() {
     }
@@ -43,4 +46,11 @@ public class Flight {
 
     public double getPrice() { return price; }
     public void setPrice(double price) { this.price = price; }
+
+    public List<Link> getLinks() { return links; }
+    public void setLinks(List<Link> links) { this.links = links; }
+
+    public void addLink(String rel, String href) {
+        this.links.add(new Link(rel, href));
+    }
 }

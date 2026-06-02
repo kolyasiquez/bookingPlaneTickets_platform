@@ -1,73 +1,66 @@
-# Implementation Plan - SOAP to REST Migration
+# Implementation Plan - Advanced REST Features & 5.0 Grade Requirements
 
-This implementation plan details the migration of the flight booking platform's internal communications from SOAP (JAX-WS) to REST (JAX-RS). The external SOAP service integration (`CountryInfoService`) will be preserved as required by the project specifications, while all internal backend APIs and frontend client integrations will be modernized to use a clean RESTful architecture.
+This plan details the additions required to satisfy all requirements for the maximum grade of 5.0:
+1. **HATEOAS**: Hypermedia links added to resources.
+2. **Security (BasicAuth + SSL)**: A custom Basic Authentication JAX-RS filter.
+3. **Error Handling**: Custom `ExceptionMapper` for uniform REST error JSON responses.
+4. **Different Language Client**: Python Flask (different from Java backend) - already in place, but updated to support BasicAuth.
+5. **Filters**: Add a dedicated `SecurityFilter` alongside the `LoggingFilter` using Jersey/JAX-RS provider annotations.
+6. **Enhanced Documentation**: Describe WADL, sample HTTP Request/Response headers, Postman test instructions, and BasicAuth instructions.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> The JAX-WS SOAP SOAP-specific mechanisms (like MTOM attachments for binary PDF/PNG responses and SOAP handlers) are completely replaced by standard HTTP and REST practices:
-> 1. We will use standard JAX-RS responses for PDF and PNG outputs, serving them natively as `application/pdf` and `image/png`.
-> 2. The SOAP-specific `WebhookPlugin` and zeep-specific plugins are removed, as the new client communicates directly via standard HTTP REST requests.
-> 3. We will introduce a JAX-RS `ContainerRequestFilter` and `ContainerResponseFilter` (`LoggingFilter`) to replace the old SOAP `LoggingHandler`, keeping the logging behavior intact.
+> - Basic Authentication credentials will be hardcoded as `admin` / `admin123` for demonstration, and validated via a custom JAX-RS `SecurityFilter`.
+> - All python client connections will now automatically use standard Basic Authentication (`auth=('admin', 'admin123')`) to bypass the filter securely.
+> - HATEOAS links will be automatically injected in search results and reservation details, guiding clients to downstream actions like downloading PDFs or QR codes.
 
 ## Proposed Changes
 
 ---
 
-### 1. Backend REST Migration (Java EE)
+### 1. Backend REST Enhancement (Java EE)
 
-We will configure JAX-RS (REST) in the Java EE project, migrate service endpoints to a new JAX-RS Resource, and add a logging filter for request/response observation.
+We will modify models to include HATEOAS links, create a custom BasicAuth filter, implement exception mappers, and update the REST endpoint logic.
 
-#### [NEW] [RestApplication.java](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/src/main/java/com/airline/RestApplication.java)
-- Define a class extending `javax.ws.rs.core.Application` with `@ApplicationPath("/api")` to enable JAX-RS.
+#### [MODIFY] [Flight.java](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/src/main/java/com/airline/model/Flight.java)
+- Add a list or map of `links` to support HATEOAS.
 
-#### [NEW] [FlightBookingResource.java](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/src/main/java/com/airline/service/FlightBookingResource.java)
-- Implement RESTful JAX-RS endpoints replacing the old SOAP service.
-- **Paths**:
-  - `GET /api/booking/flights` - Search flights (producing JSON).
-  - `POST /api/booking/book` - Book a ticket (consuming JSON, producing JSON).
-  - `GET /api/booking/reservation/{id}` - Retrieve reservation details (producing JSON).
-  - `GET /api/booking/reservation/{id}/pdf` - Generate and download ticket PDF (producing `application/pdf`).
-  - `GET /api/booking/reservation/{id}/qrcode` - Generate and download ticket QR Code (producing `image/png`).
+#### [MODIFY] [Reservation.java](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/src/main/java/com/airline/model/Reservation.java)
+- Add a list or map of `links` to support HATEOAS.
 
-#### [NEW] [LoggingFilter.java](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/src/main/java/com/airline/handlers/LoggingFilter.java)
-- Implement `ContainerRequestFilter` and `ContainerResponseFilter` to print elegant RESTful traffic logs to the server console.
+#### [NEW] [SecurityFilter.java](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/src/main/java/com/airline/handlers/SecurityFilter.java)
+- Implement `ContainerRequestFilter` to perform Basic Authentication (validate `Authorization: Basic <base64>` header against `admin` and `admin123`).
 
-#### [DELETE] [FlightBookingService.java](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/src/main/java/com/airline/service/FlightBookingService.java)
-- Delete the old SOAP JAX-WS service interface.
+#### [NEW] [EntityNotFoundExceptionMapper.java](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/src/main/java/com/airline/handlers/EntityNotFoundExceptionMapper.java)
+- Implement `ExceptionMapper<javax.ws.rs.NotFoundException>` to return standardized JSON error messages with a 404 status.
 
-#### [DELETE] [FlightBookingServiceImpl.java](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/src/main/java/com/airline/service/FlightBookingServiceImpl.java)
-- Delete the old SOAP JAX-WS service implementation.
+#### [NEW] [GenericExceptionMapper.java](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/src/main/java/com/airline/handlers/GenericExceptionMapper.java)
+- Implement `ExceptionMapper<Throwable>` to return uniform JSON responses for server exceptions.
 
-#### [DELETE] [LoggingHandler.java](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/src/main/java/com/airline/handlers/LoggingHandler.java)
-- Delete the old SOAP-specific logging handler.
-
-#### [DELETE] [handlers.xml](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/src/main/resources/com/airline/service/handlers.xml)
-- Delete the SOAP-specific handler configuration file.
+#### [MODIFY] [FlightBookingResource.java](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/src/main/java/com/airline/service/FlightBookingResource.java)
+- Update endpoints to enrich `Flight` and `Reservation` models with HATEOAS hypermedia links before sending them in responses.
 
 ---
 
-### 2. Client REST Migration (Python Flask)
+### 2. Client Security Adaptation (Python Flask)
 
-We will modify the Flask web application to communicate with JAX-RS REST endpoints instead of using `zeep` for SOAP. The external SOAP connection will remain unchanged.
+We will configure the `requests.Session` object to authenticate with the backend using the Basic Authentication header.
 
 #### [MODIFY] [client/app.py](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/client/app.py)
-- Remove `zeep` imports and the SOAP `WebhookPlugin`.
-- Add a REST context variable `API_BASE_URL = 'https://localhost:8181/airline-service/api/booking'`.
-- Modify all Flask routing paths (`/search`, `/book`, `/reservation/<res_id>`, `/download_ticket/<res_id>`, `/download_qrcode/<res_id>`) to query the backend REST endpoints via `requests` instead of `zeep`.
-- Retrieve responses as JSON or raw content (`response.json()` and `response.content`).
+- Set `session.auth = ('admin', 'admin123')` so all REST calls automatically include Basic Authentication.
 
 ---
 
-### 3. Documentation Updates
+### 3. Documentation Expansion
 
-We will update system documents to accurately describe the RESTful architecture.
+We will add sections covering WADL, Postman testing, BasicAuth credentials, filters, error mapping, and HTTP Monitor observation.
 
 #### [MODIFY] [docs/General_Documentation.md](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/docs/General_Documentation.md)
-- Update terminology, exchange patterns, base URLs, endpoints, and examples from SOAP/XML to REST/JSON.
+- Detail BasicAuth, HATEOAS structure, custom exception mapping, filters, WADL, and Postman testing commands/instructions.
 
 #### [MODIFY] [docs/wymagania_projektowe.md](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/docs/wymagania_projektowe.md)
-- Adapt the descriptions of the architecture and modular boundaries to represent the new RESTful API design.
+- Map the implementations of HATEOAS, Filters, Security, Different Language Client, and Error Handling to the grading criteria.
 
 ---
 
@@ -75,11 +68,7 @@ We will update system documents to accurately describe the RESTful architecture.
 
 ### Automated/Manual Tests
 - Build and compile the `backend` module.
-- Run the `backend` under Payara, `client` under Flask, and `notification-service`.
-- Perform manual end-to-end flow validation using the Flask web interface:
-  1. Search flights (e.g. Warsaw -> London).
-  2. Input passenger name and book a flight.
-  3. Validate reservation confirmation page.
-  4. Test Downloading E-Ticket (PDF) and QR Code (PNG).
-  5. Check console output on `backend` for JAX-RS request logging.
-  6. Check console output on `notification-service` for asynchronous log delivery.
+- Validate that making a GET/POST without `Authorization` header returns a `401 Unauthorized` response.
+- Validate that providing `admin` and `admin123` returns correct responses.
+- Verify HATEOAS links are included in flight and reservation details.
+- Verify Flask client seamlessly authenticates and loads results.
