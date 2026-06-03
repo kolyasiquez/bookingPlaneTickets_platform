@@ -28,10 +28,15 @@
                     <td>{{ flight.date }} {{ flight.time }}</td>
                     <td>${{ flight.price }}</td>
                     <td>
-                        <form action="/book" method="POST" style="margin: 0; display: flex; gap: 0.5rem; align-items: center;">
+                        <form action="/book" method="POST" enctype="multipart/form-data" style="margin: 0; display: flex; flex-direction: column; gap: 0.5rem;">
                             <input type="hidden" name="flightId" value="{{ flight.id }}">
-                            <input type="text" name="passengerName" placeholder="Passenger Name" required style="padding: 0.5rem; width: 150px;">
-                            <button type="submit" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Book</button>
+                            <input type="hidden" name="cityTo" value="{{ flight.cityTo }}">
+                            <input type="text" name="passengerName" placeholder="Imię i nazwisko" required style="padding: 0.5rem; width: 220px; font-size: 0.9rem;">
+                            <div style="display: flex; flex-direction: column; gap: 0.2rem;">
+                                <label style="font-size: 0.75rem; font-weight: normal; margin: 0; color: var(--text-muted);">Zdjęcie pasażera (opcjonalnie):</label>
+                                <input type="file" name="passengerPhoto" accept="image/*" style="padding: 0.25rem; font-size: 0.8rem; width: 220px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2);">
+                            </div>
+                            <button type="submit" style="padding: 0.5rem 1rem; font-size: 0.875rem; margin-top: 0.25rem; width: 220px;">Zarezerwuj</button>
                         </form>
                     </td>
                 </tr>

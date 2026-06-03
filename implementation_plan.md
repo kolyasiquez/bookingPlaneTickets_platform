@@ -1,74 +1,92 @@
-# Implementation Plan - Advanced REST Features & 5.0 Grade Requirements
+# Implementation Plan - Advanced Multi-Module Architecture & Grade 5.0+ Requirements
 
-This plan details the additions required to satisfy all requirements for the maximum grade of 5.0:
-1. **HATEOAS**: Hypermedia links added to resources.
-2. **Security (BasicAuth + SSL)**: A custom Basic Authentication JAX-RS filter.
-3. **Error Handling**: Custom `ExceptionMapper` for uniform REST error JSON responses.
-4. **Different Language Client**: Python Flask (different from Java backend) - already in place, but updated to support BasicAuth.
-5. **Filters**: Add a dedicated `SecurityFilter` alongside the `LoggingFilter` using Jersey/JAX-RS provider annotations.
-6. **Enhanced Documentation**: Describe WADL, sample HTTP Request/Response headers, Postman test instructions, and BasicAuth instructions.
+This plan outlines the design and implementation details to upgrade the flight booking platform to satisfy all the advanced requirements (15, 10, and 5 points):
+1. **6 Dockerized Modules**: `client` (Flask), `backend` (Java Payara), `notification-service` (Flask), `db` (PostgreSQL), `redis` (Rate Limit store), and `nginx` (SSL reverse proxy & static server).
+2. **Network Separation**: Isolation using separate Docker networks (`frontend-network`, `backend-network`, `db-network`, `redis-network`).
+3. **WebSockets**: Real-time notifications on flight bookings using `Flask-SocketIO` and Socket.io in the browser.
+4. **Rate Limiting**: Using `Flask-Limiter` with Redis to restrict search/booking attempts and return `429 Too Many Requests`.
+5. **File Transfer (Passenger Photo Upload)**: Upload passenger photos during booking, persist them in a Docker volume, and display them in reservation details.
+6. **Secure Login**: User registration and login with BCrypt hashed passwords stored in PostgreSQL, and session-based state management.
+7. **Database Persistence**: Migrating from JSON files to PostgreSQL.
 
 ## User Review Required
 
 > [!IMPORTANT]
-> - Basic Authentication credentials will be hardcoded as `admin` / `admin123` for demonstration, and validated via a custom JAX-RS `SecurityFilter`.
-> - All python client connections will now automatically use standard Basic Authentication (`auth=('admin', 'admin123')`) to bypass the filter securely.
-> - HATEOAS links will be automatically injected in search results and reservation details, guiding clients to downstream actions like downloading PDFs or QR codes.
+> - **Payara Dockerization**: We will compile the backend war using a multi-stage Maven build and deploy it automatically to a `payara/server-full:5.2022.5` container.
+> - **Nginx as Gateway**: Nginx will act as the single SSL/TLS gateway (`https://localhost:443`). It will serve the static files and reverse-proxy to the Flask Client (`http://client:5000`) and the REST Backend (`http://backend:8080/airline-service/api`).
+> - **Database Migrations**: Data storage will move from `backend/data/*.json` to a PostgreSQL instance (`db`).
 
 ## Proposed Changes
 
 ---
 
-### 1. Backend REST Enhancement (Java EE)
+### 1. Dockerization & Networking
 
-We will modify models to include HATEOAS links, create a custom BasicAuth filter, implement exception mappers, and update the REST endpoint logic.
+#### [NEW] [docker-compose.yml](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/docker-compose.yml)
+- Define 6 services: `db`, `redis`, `backend`, `client`, `notification-service`, `nginx`.
+- Set environment variables (`.env`) for database connections and ports.
+- Set up volumes: `db-data` for PostgreSQL persistence and `uploads-data` for passenger photos.
+- Define custom networks:
+  - `frontend-net`: `nginx`, `client`
+  - `backend-net`: `nginx`, `client`, `backend`, `notification-service`
+  - `db-net`: `backend`, `db`, `client`
+  - `redis-net`: `client`, `redis`
 
-#### [MODIFY] [Flight.java](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/src/main/java/com/airline/model/Flight.java)
-- Add a list or map of `links` to support HATEOAS.
+#### [NEW] [Dockerfile (client)](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/client/Dockerfile)
+- Python 3.9 image, installs dependencies, exposes 5000, runs `app.py` under `gunicorn` with eventlet for SocketIO.
 
-#### [MODIFY] [Reservation.java](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/src/main/java/com/airline/model/Reservation.java)
-- Add a list or map of `links` to support HATEOAS.
+#### [NEW] [Dockerfile (backend)](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/Dockerfile)
+- Multi-stage build:
+  - Build stage: `maven:3.8.4-openjdk-8-slim` to compile and package the WAR file.
+  - Runtime stage: `payara/server-full:5.2022.5` to deploy `airline-service.war`.
 
-#### [NEW] [SecurityFilter.java](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/src/main/java/com/airline/handlers/SecurityFilter.java)
-- Implement `ContainerRequestFilter` to perform Basic Authentication (validate `Authorization: Basic <base64>` header against `admin` and `admin123`).
+#### [NEW] [Dockerfile (notification)](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/notification-service/Dockerfile)
+- Python 3.9 image, installs Flask, runs on port 5001.
 
-#### [NEW] [EntityNotFoundExceptionMapper.java](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/src/main/java/com/airline/handlers/EntityNotFoundExceptionMapper.java)
-- Implement `ExceptionMapper<javax.ws.rs.NotFoundException>` to return standardized JSON error messages with a 404 status.
-
-#### [NEW] [GenericExceptionMapper.java](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/src/main/java/com/airline/handlers/GenericExceptionMapper.java)
-- Implement `ExceptionMapper<Throwable>` to return uniform JSON responses for server exceptions.
-
-#### [MODIFY] [FlightBookingResource.java](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/src/main/java/com/airline/service/FlightBookingResource.java)
-- Update endpoints to enrich `Flight` and `Reservation` models with HATEOAS hypermedia links before sending them in responses.
+#### [NEW] [nginx.conf](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/nginx/nginx.conf)
+- Serve Flask client and backend API under TLS/SSL (`https`).
+- Proxy web traffic, load certificates, route `/api/` to Payara backend, and route websockets.
 
 ---
 
-### 2. Client Security Adaptation (Python Flask)
-
-We will configure the `requests.Session` object to authenticate with the backend using the Basic Authentication header.
+### 2. Client Upgrades (Python Flask)
 
 #### [MODIFY] [client/app.py](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/client/app.py)
-- Set `session.auth = ('admin', 'admin123')` so all REST calls automatically include Basic Authentication.
+- Integrate `Flask-SocketIO` to support real-time WebSocket communication.
+- Integrate `Flask-Limiter` using `redis` as the storage backend for rate limiting.
+- Add Login/Register routes with password hashing (`werkzeug.security`).
+- Add user-session state and DB-backed storage for users in Postgres.
+- Add support for passenger photo upload during booking (handling `multipart/form-data`).
+
+#### [MODIFY] [client/requirements.txt](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/client/requirements.txt)
+- Add `flask-socketio`, `eventlet`, `flask-limiter`, `redis`, `psycopg2-binary` (for DB operations).
+
+#### [MODIFY] [client templates](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/client/templates/)
+- Update forms to support file upload (`enctype="multipart/form-data"`).
+- Connect Socket.io client in template to display live booking notifications.
+- Style login/registration and upload pages.
 
 ---
 
-### 3. Documentation Expansion
+### 3. Backend Upgrades (Java JAX-RS)
 
-We will add sections covering WADL, Postman testing, BasicAuth credentials, filters, error mapping, and HTTP Monitor observation.
+#### [MODIFY] [backend pom.xml](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/pom.xml)
+- Add PostgreSQL JDBC driver dependency.
+- Add `jersey-media-multipart` for handling file uploads.
 
-#### [MODIFY] [docs/General_Documentation.md](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/docs/General_Documentation.md)
-- Detail BasicAuth, HATEOAS structure, custom exception mapping, filters, WADL, and Postman testing commands/instructions.
-
-#### [MODIFY] [docs/wymagania_projektowe.md](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/docs/wymagania_projektowe.md)
-- Map the implementations of HATEOAS, Filters, Security, Different Language Client, and Error Handling to the grading criteria.
+#### [MODIFY] [backend source](file:///c:/Users/kolyas/Desktop/bookingPlaneTickets_platform/bookingPlaneTickets_platform/backend/src/main/java/com/airline/)
+- **Database integration**: Replace JSON file persistence in `DataStorage.java` with direct JDBC calls to PostgreSQL.
+- **REST Endpoints**: Update `/book` to accept multipart file uploads (passenger photo) and save them to a designated persistent path.
+- Register `MultiPartFeature` in `RestApplication.java`.
 
 ---
 
 ## Verification Plan
 
-### Automated/Manual Tests
-- Build and compile the `backend` module.
-- Validate that making a GET/POST without `Authorization` header returns a `401 Unauthorized` response.
-- Validate that providing `admin` and `admin123` returns correct responses.
-- Verify HATEOAS links are included in flight and reservation details.
-- Verify Flask client seamlessly authenticates and loads results.
+### Automated / Manual Tests
+- Run `docker-compose up --build` to build and launch the environment.
+- **WebSockets**: Open multiple browser tabs, book a ticket in one, and verify a real-time WebSocket notification appears in the other tabs.
+- **Rate Limiting**: Refresh the search page rapidly and verify that a `429 Too Many Requests` is returned once the threshold is exceeded.
+- **File Transfer**: Book a flight, upload a photo, and verify that the photo is persistently saved and correctly displayed on the reservation page.
+- **Database Persistence**: Restart the Docker containers (`docker-compose down && docker-compose up`) and verify that flight, reservation, and user data are retained.
+- **Network Separation**: Exec into the `db` or `redis` containers and verify they cannot ping or access each other, and verify that the client cannot connect directly to PostgreSQL without going through standard defined networks.

@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="glass-panel" style="max-width: 500px; margin: 0 auto; text-align: center;">
+    <h2 style="color: #ef4444; margin-bottom: 1rem;">Limit żądań przekroczony (429)</h2>
+    <p style="color: var(--text-muted); font-size: 1.125rem; line-height: 1.6; margin-bottom: 2rem;">
+        Wykryto zbyt dużą liczbę zapytań z Twojego adresu IP w krótkim czasie. W celu zapewnienia stabilności systemu wprowadzono tymczasową blokadę.
+    </p>
+    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.5rem; padding: 1.5rem; margin-bottom: 2rem; font-family: monospace; color: #f87171;">
+        Błąd: {{ error or "Too Many Requests" }}
+    </div>
+    <a href="/" class="btn-secondary" style="display: inline-block; padding: 0.875rem 1.5rem; text-decoration: none; border-radius: 0.5rem;">Powrót do strony głównej</a>
+</div>
+{% endblock %}

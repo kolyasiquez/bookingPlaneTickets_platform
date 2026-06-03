@@ -5,6 +5,12 @@
     <p style="color: var(--text-muted); margin-bottom: 2rem;">Your booking has been successfully processed.</p>
     
     <div style="background: rgba(0,0,0,0.2); border-radius: 0.5rem; padding: 2rem; display: inline-block; text-align: left; margin-bottom: 2rem; width: 100%; max-width: 400px;">
+        {% if reservation.passengerPhoto %}
+        <div style="margin-bottom: 1.5rem; text-align: center;">
+            <img src="/uploads/{{ reservation.passengerPhoto }}" alt="Passenger Photo" style="max-width: 120px; max-height: 120px; border-radius: 50%; border: 3px solid var(--primary); object-fit: cover; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+        </div>
+        {% endif %}
+
         <div style="margin-bottom: 1rem;">
             <span style="color: var(--text-muted); font-size: 0.875rem;">Reservation ID</span>
             <div style="font-size: 1.5rem; font-weight: 700; letter-spacing: 1px;">{{ reservation.id }}</div>

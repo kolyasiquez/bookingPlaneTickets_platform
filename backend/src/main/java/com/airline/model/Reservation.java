@@ -12,15 +12,17 @@ public class Reservation {
     private String id;
     private Flight flight;
     private String passengerName;
+    private String passengerPhoto;
     private List<Link> links = new ArrayList<>();
 
     public Reservation() {
     }
 
-    public Reservation(String id, Flight flight, String passengerName) {
+    public Reservation(String id, Flight flight, String passengerName, String passengerPhoto) {
         this.id = id;
         this.flight = flight;
         this.passengerName = passengerName;
+        this.passengerPhoto = passengerPhoto;
     }
 
     public String getId() { return id; }
@@ -34,6 +36,9 @@ public class Reservation {
 
     public List<Link> getLinks() { return links; }
     public void setLinks(List<Link> links) { this.links = links; }
+
+    public String getPassengerPhoto() { return passengerPhoto; }
+    public void setPassengerPhoto(String passengerPhoto) { this.passengerPhoto = passengerPhoto; }
 
     public void addLink(String rel, String href) {
         this.links.add(new Link(rel, href));

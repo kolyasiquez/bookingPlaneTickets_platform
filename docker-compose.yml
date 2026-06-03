@@ -1,0 +1,118 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: airline-db
+    environment:
+      POSTGRES_DB: airline
+      POSTGRES_USER: airline_user
+      POSTGRES_PASSWORD: airline_pass
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - db-net
+    expose:
+      - "5432"
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    container_name: airline-redis
+    command: redis-server --protected-mode no
+    volumes:
+      - redis-data:/data
+    networks:
+      - redis-net
+    expose:
+      - "6379"
+    restart: always
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: airline-backend
+    environment:
+      - DB_URL=jdbc:postgresql://db:5432/airline
+      - DB_USER=airline_user
+      - DB_PASS=airline_pass
+      - UPLOADS_DIR=/app/uploads
+      - NOTIFICATION_URL=http://airline-notification:5001/notify
+    volumes:
+      - uploads-data:/app/uploads
+    networks:
+      - db-net
+      - backend-net
+    expose:
+      - "8080"
+    depends_on:
+      - db
+    restart: always
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: airline-client
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - BACKEND_URL=http://backend:8080/airline-service/api
+      - DB_HOST=db
+      - DB_NAME=airline
+      - DB_USER=airline_user
+      - DB_PASS=airline_pass
+    networks:
+      - frontend-net
+      - backend-net
+      - redis-net
+      - db-net
+    expose:
+      - "5000"
+    depends_on:
+      - redis
+      - backend
+    restart: always
+
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: airline-notification
+    networks:
+      - backend-net
+    expose:
+      - "5001"
+    restart: always
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: airline-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - uploads-data:/app/uploads:ro
+    networks:
+      - frontend-net
+      - backend-net
+    depends_on:
+      - client
+      - backend
+    restart: always
+
+networks:
+  frontend-net:
+    driver: bridge
+  backend-net:
+    driver: bridge
+  db-net:
+    driver: bridge
+  redis-net:
+    driver: bridge
+
+volumes:
+  db-data:
+  redis-data:
+  uploads-data:

@@ -1,16 +1,30 @@
-# Task List - Advanced REST Features & 5.0 Grade Requirements
+# Task List - Multi-Module Architecture & Grade 5.0+ Requirements
 
-- [x] Backend Implementation
-    - [x] Update `Flight.java` and `Reservation.java` with HATEOAS properties
-    - [x] Implement `SecurityFilter.java` (Basic Authentication)
-    - [x] Implement JAX-RS Exception Mappers (`EntityNotFoundExceptionMapper.java`, `GenericExceptionMapper.java`)
-    - [x] Update `FlightBookingResource.java` to inject dynamic HATEOAS links
-- [x] Client Security Updates
-    - [x] Configure Basic Authentication (`session.auth`) in `client/app.py`
-- [x] Documentation Enhancements
-    - [x] Update `docs/General_Documentation.md` with WADL, sample request/responses, BasicAuth, HATEOAS, and Postman details
-    - [x] Update `docs/wymagania_projektowe.md` showing how 5.0 requirements are fulfilled
-- [x] Verification and Testing
-    - [x] Test Basic Authentication access control (unauthorized vs authorized)
-    - [x] Verify HATEOAS structures in JSON payloads
-    - [x] Verify E2E web operations
+- [x] Dockerization and Network Setup
+    - [x] Create `Dockerfile` for Python Flask `client`
+    - [x] Create `Dockerfile` for Python `notification-service`
+    - [x] Create `Dockerfile` for Java `backend` (multi-stage compilation & Payara deployment)
+    - [x] Create SSL Certificate config and `nginx.conf`
+    - [x] Create `Dockerfile` for Nginx
+    - [x] Create `docker-compose.yml` with all 6 services and custom networks
+- [x] Database Schema & JDBC Setup
+    - [x] Add PostgreSQL JDBC dependency to `backend/pom.xml`
+    - [x] Add `jersey-media-multipart` dependency to `backend/pom.xml`
+    - [x] Create SQL initialization script for database (flights, reservations, users tables)
+- [x] Backend Source Code Modifications
+    - [x] Update `RestApplication.java` to register `MultiPartFeature`
+    - [x] Replace file persistence with PostgreSQL JDBC in `DataStorage.java`
+    - [x] Modify `FlightBookingResource.java` to support photo upload and store path in Postgres
+- [x] Client Application Upgrades
+    - [x] Update `client/requirements.txt` with Flask-SocketIO, Flask-Limiter, psycopg2-binary, and redis
+    - [x] Implement secure login/registration and session storage in `client/app.py`
+    - [x] Implement rate limiting using Redis in `client/app.py`
+    - [x] Implement real-time websocket notifications on booking in `client/app.py` and templates
+    - [x] Update booking forms and routes to support passenger photo upload
+- [ ] Verification and Testing
+    - [ ] Verify Docker Compose builds and runs all 6 containers
+    - [ ] Verify Rate Limiting triggers 429 status on rapid requests
+    - [ ] Verify WebSocket booking notification pushes live toast in another browser window
+    - [ ] Verify file upload works and saves photo persistently
+    - [ ] Verify database state remains after container restarts
+    - [x] Update documentation files
