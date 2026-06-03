@@ -7,3 +7,4 @@ flask-limiter==3.5.0
 redis==5.0.1
 psycopg2-binary==2.9.9
 gunicorn==21.2.0
+dnspython==1.16.0

@@ -85,3 +85,22 @@ Cały ruch z przeglądarki klienta do aplikacji przechodzi przez szyfrowany tune
 7. Aby przetestować **WebSockets**: otwórz drugą kartę w trybie incognito, zaloguj się i dokonaj rezerwacji. Na pierwszej karcie zobaczysz natychmiast wyskakujący toast z powiadomieniem!
 8. Aby przetestować **Rate Limiting**: klikaj bardzo szybko przycisk wyszukiwania lotów. Po przekroczeniu limitu otrzymasz stronę błędu `429`.
 9. Aby zweryfikować **trwałość danych**: zrestartuj kontenery (`docker-compose down && docker-compose up`) i zaloguj się ponownie – Twoje konto oraz rezerwacja nadal będą istnieć!
+
+---
+
+## 🔧 Rozwiązane Problemy Środowiskowe (Fedora 44 & Python Eventlet)
+
+Podczas weryfikacji i uruchamiania projektu na systemie Fedora 44 zidentyfikowano i pomyślnie rozwiązano dwa kluczowe problemy wdrożeniowe:
+
+1. **Błąd uprawnień do pliku inicjalizacyjnego bazy danych (`Permission Denied` przy `init.sql`):**
+   - **Problem:** Aktywny system SELinux domyślnie blokuje kontenerom dostęp do wolumenów montowanych bezpośrednio z systemu gospodarza (bind mounts).
+   - **Rozwiązanie:** Dodano znacznik `:z` do wpisu wolumenu w `docker-compose.yml`:
+     ```yaml
+     - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:z
+     ```
+     Pozwala to na automatyczne nadanie poprawnego kontekstu bezpieczeństwa SELinux dla tego pliku.
+
+2. **Błąd rozwiązywania nazw DNS (`LifetimeTimeout / ignore_errors` dla Redis/DB) w kliencie:**
+   - **Problem:** Niekompatybilność biblioteki `eventlet==0.33.3` z najnowszymi wersjami `dnspython` pobieranymi przez `pip`. Blokowało to połączenie z kontenerami `redis:6379` oraz `db:5432` wewnątrz sieci Docker.
+   - **Rozwiązanie:** Dodano jawne przypięcie `dnspython==1.16.0` w `client/requirements.txt` w celu zagwarantowania stabilnej pracy serwera Gunicorn/Eventlet.
+

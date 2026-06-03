@@ -212,6 +212,9 @@ def book():
         files = {}
         if photo_file and photo_file.filename:
             files['photo'] = (photo_file.filename, photo_file.read(), photo_file.mimetype)
+        else:
+            # Force multipart/form-data request even when no photo is uploaded
+            files['photo'] = ('', b'', 'application/octet-stream')
             
         response = api_session.post(f"{API_BASE_URL}/book", data=data, files=files, timeout=15)
         if response.status_code != 200:
