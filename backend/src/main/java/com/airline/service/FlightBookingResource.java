@@ -98,6 +98,11 @@ public class FlightBookingResource {
             @FormDataParam("photo") java.io.InputStream photoInputStream,
             @FormDataParam("photo") FormDataContentDisposition photoDisposition) {
 
+        System.out.println("BACKEND: Received bookTicket request");
+        System.out.println("BACKEND: flightId=" + flightId + ", passengerName=" + passengerName);
+        System.out.println("BACKEND: photoInputStream=" + (photoInputStream != null ? "Not Null" : "Null"));
+        System.out.println("BACKEND: photoDisposition=" + (photoDisposition != null ? "Not Null (filename=" + photoDisposition.getFileName() + ")" : "Null"));
+
         if (flightId == null || passengerName == null || passengerName.trim().isEmpty()) {
             return Response.status(Response.Status.BAD_REQUEST).entity("{\"error\": \"Invalid input data.\"}").build();
         }
@@ -110,6 +115,7 @@ public class FlightBookingResource {
 
         // Save uploaded photo
         String photoFilename = savePhoto(photoInputStream, photoDisposition);
+        System.out.println("BACKEND: savePhoto result photoFilename=" + photoFilename);
 
         String reservationId = "RES-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         Reservation reservation = new Reservation(reservationId, flight, passengerName, photoFilename);
@@ -136,7 +142,16 @@ public class FlightBookingResource {
     }
 
     private String savePhoto(java.io.InputStream is, FormDataContentDisposition fileDetail) {
-        if (is == null || fileDetail == null || fileDetail.getFileName() == null || fileDetail.getFileName().isEmpty()) {
+        if (is == null) {
+            System.err.println("BACKEND: savePhoto error - InputStream is null");
+            return null;
+        }
+        if (fileDetail == null) {
+            System.err.println("BACKEND: savePhoto error - FormDataContentDisposition is null");
+            return null;
+        }
+        if (fileDetail.getFileName() == null || fileDetail.getFileName().isEmpty()) {
+            System.err.println("BACKEND: savePhoto error - fileDetail filename is null or empty");
             return null;
         }
         String uploadsDir = System.getenv("UPLOADS_DIR");
@@ -145,7 +160,8 @@ public class FlightBookingResource {
         }
         java.io.File dir = new java.io.File(uploadsDir);
         if (!dir.exists()) {
-            dir.mkdirs();
+            boolean created = dir.mkdirs();
+            System.out.println("BACKEND: savePhoto created uploads dir? " + created);
         }
         
         String originalName = fileDetail.getFileName();
@@ -156,6 +172,7 @@ public class FlightBookingResource {
         }
         String uniqueName = UUID.randomUUID().toString() + extension;
         java.io.File file = new java.io.File(dir, uniqueName);
+        System.out.println("BACKEND: savePhoto target file: " + file.getAbsolutePath());
         
         try (java.io.OutputStream os = new java.io.FileOutputStream(file)) {
             byte[] buffer = new byte[4096];
@@ -163,9 +180,11 @@ public class FlightBookingResource {
             while ((bytesRead = is.read(buffer)) != -1) {
                 os.write(buffer, 0, bytesRead);
             }
+            System.out.println("BACKEND: savePhoto file written successfully!");
             return uniqueName;
         } catch (java.io.IOException e) {
-            System.err.println("Error saving photo: " + e.getMessage());
+            System.err.println("BACKEND: savePhoto IOException: " + e.getMessage());
+            e.printStackTrace();
             return null;
         }
     }

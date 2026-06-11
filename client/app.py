@@ -217,6 +217,12 @@ def book():
             files['photo'] = ('', b'', 'application/octet-stream')
             
         response = api_session.post(f"{API_BASE_URL}/book", data=data, files=files, timeout=15)
+        print("BACKEND BOOK RESPONSE STATUS:", response.status_code)
+        try:
+            print("BACKEND BOOK RESPONSE BODY:", response.json())
+        except Exception:
+            print("BACKEND BOOK RESPONSE TEXT:", response.text)
+            
         if response.status_code != 200:
             return f"Error booking ticket: Status code {response.status_code}"
             

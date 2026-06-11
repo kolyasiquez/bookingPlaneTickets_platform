@@ -121,4 +121,34 @@ public class DataStorage {
             System.err.println("Error saving reservations: " + e.getMessage());
         }
     }
+
+    public static boolean registerUser(String username, String passwordHash) {
+        String query = "INSERT INTO users (username, password_hash) VALUES (?, ?) ON CONFLICT DO NOTHING";
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, username);
+            stmt.setString(2, passwordHash);
+            int affectedRows = stmt.executeUpdate();
+            return affectedRows > 0;
+        } catch (SQLException e) {
+            System.err.println("Error registering user: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public static String getUserPasswordHash(String username) {
+        String query = "SELECT password_hash FROM users WHERE username = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, username);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("password_hash");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting user password hash: " + e.getMessage());
+        }
+        return null;
+    }
 }

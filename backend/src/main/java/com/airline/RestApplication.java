@@ -2,6 +2,7 @@ package com.airline;
 
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import com.airline.service.FlightBookingResource;
+import com.airline.service.AuthResource;
 import com.airline.handlers.LoggingFilter;
 import com.airline.handlers.SecurityFilter;
 import com.airline.handlers.EntityNotFoundExceptionMapper;
@@ -19,6 +20,7 @@ public class RestApplication extends Application {
         Set<Class<?>> classes = new HashSet<>();
         classes.add(MultiPartFeature.class);
         classes.add(FlightBookingResource.class);
+        classes.add(AuthResource.class);
         classes.add(LoggingFilter.class);
         classes.add(SecurityFilter.class);
         classes.add(EntityNotFoundExceptionMapper.class);

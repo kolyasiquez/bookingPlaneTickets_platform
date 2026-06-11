@@ -21,10 +21,12 @@
     - [x] Implement rate limiting using Redis in `client/app.py`
     - [x] Implement real-time websocket notifications on booking in `client/app.py` and templates
     - [x] Update booking forms and routes to support passenger photo upload
-- [ ] Verification and Testing
-    - [ ] Verify Docker Compose builds and runs all 6 containers
+- [/] Verification and Testing
+    - [x] Fix compilation issues preventing Docker Compose build from finishing (added missing methods in DataStorage.java and registered AuthResource)
+    - [ ] Verify Docker Compose builds and runs all 6 containers (Ready for user verification)
     - [ ] Verify Rate Limiting triggers 429 status on rapid requests
     - [ ] Verify WebSocket booking notification pushes live toast in another browser window
     - [ ] Verify file upload works and saves photo persistently
     - [ ] Verify database state remains after container restarts
     - [x] Update documentation files
+

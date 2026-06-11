@@ -26,6 +26,48 @@
 
 System został zaimplementowany z wykorzystaniem standardu **RESTful Web Services** przy użyciu specyfikacji **JAX-RS** na serwerze aplikacji **Payara 5**. Wszystkie wewnętrzne interakcje między klientem a serwerem odbywają się w architekturze REST z wymianą danych w formacie **JSON** za pośrednictwem bezpiecznego protokołu **HTTPS (SSL/TLS)**.
 
+### 🏗️ Schemat Blokowy Modułów (Architektura)
+
+Poniższy schemat obrazuje architekturę systemu podzieloną na **6 modułów** odizolowanych sieciowo w Dockerze:
+
+```mermaid
+graph TD
+    User([Przeglądarka / Klient]) <-->|HTTPS: 443| Nginx[nginx SSL Reverse Proxy]
+    
+    subgraph frontend-net
+        Nginx <-->|HTTP: 5000| Flask[client Flask Application]
+    end
+    
+    subgraph backend-net
+        Flask <-->|HTTP: 8080| Payara[backend Java Payara REST API]
+        Nginx <-->|HTTP: 8080| Payara
+        Payara -->|HTTP: 5001| Notif[notification-service Flask]
+    end
+
+    subgraph redis-net
+        Flask <-->|Port: 6379| Redis[(redis Rate Limit Store)]
+    end
+
+    subgraph db-net
+        Payara <-->|Port: 5432| Postgres[(db PostgreSQL Database)]
+        Flask <-->|Port: 5432| Postgres
+    end
+```
+
+### 🔗 Lista Endpointów API REST (Backend JAX-RS)
+
+Wszystkie poniższe adresy URL mają prefiks `https://localhost/airline-service/api` (dostęp przez bramę Nginx):
+
+| Metoda | Ścieżka (Path) | Autoryzacja | Opis |
+| :--- | :--- | :--- | :--- |
+| **GET** | `/booking/flights` | Basic Auth | Wyszukiwanie lotów na podstawie parametrów: `cityFrom`, `cityTo`, `date` (zwraca HATEOAS). |
+| **POST** | `/booking/book` | Basic Auth | Rezerwacja biletu. Przyjmuje dane typu `multipart/form-data` wraz z plikiem zdjęcia pasażera. |
+| **GET** | `/booking/reservation/{id}` | Basic Auth | Pobranie szczegółowych informacji o rezerwacji na podstawie jej ID (zwraca HATEOAS). |
+| **GET** | `/booking/reservation/{id}/pdf` | Basic Auth | Pobranie wygenerowanego dynamicznie biletu lotniczego w formacie PDF. |
+| **GET** | `/booking/reservation/{id}/qrcode` | Basic Auth | Pobranie wygenerowanego dynamicznie kodu QR w formacie PNG zawierającego dane biletu. |
+| **POST** | `/auth/register` | Brak | Rejestracja nowego użytkownika bezpośrednio w bazie PostgreSQL. |
+| **POST** | `/auth/login` | Brak | Logowanie użytkownika na podstawie danych uwierzytelniających. |
+
 ---
 
 ## 2. Słownik pojęć
